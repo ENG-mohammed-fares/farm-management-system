@@ -1,0 +1,77 @@
+.form-panel {
+    -fx-background-color: rgba(255, 255, 255, 0.88);
+    -fx-background-radius: 15px;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 20, 0, 0, 5);
+}
+
+.tabs-box {
+    -fx-padding: 0 0 10 0;
+}
+
+.tab-active {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #2E7D32;
+    -fx-border-color: transparent transparent #2E7D32 transparent;
+    -fx-border-width: 0 0 2 0;
+    -fx-padding: 0 0 5 0;
+    -fx-cursor: hand;
+}
+
+.tab-inactive {
+    -fx-font-size: 16px;
+    -fx-text-fill: #888888;
+    -fx-cursor: hand;
+    -fx-padding: 0 0 5 0;
+}
+
+.tab-inactive:hover {
+    -fx-text-fill: #2E7D32;
+}
+
+.field-label {
+    -fx-font-size: 12px;
+    -fx-text-fill: #444444;
+}
+
+.input-field {
+    -fx-background-color: #F5F5F5;
+    -fx-background-radius: 8px;
+    -fx-border-color: #E0E0E0;
+    -fx-border-radius: 8px;
+    -fx-padding: 8px;
+    -fx-font-size: 13px;
+    -fx-pref-height: 38px;
+    -fx-max-width: Infinity;
+}
+
+.input-field:focused {
+    -fx-border-color: #2E7D32;
+    -fx-background-color: #FFFFFF;
+}
+
+.signup-btn {
+    -fx-background-color: #2E7D32;
+    -fx-text-fill: #FFFFFF;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-background-radius: 8px;
+    -fx-pref-height: 42px;
+    -fx-cursor: hand;
+}
+
+.signup-btn:hover {
+    -fx-background-color: #1B5E20;
+}
+
+.error-label {
+    -fx-text-fill: #D32F2F;
+    -fx-font-size: 12px;
+}
+
+.show-hide-btn {
+    -fx-background-color: transparent;
+    -fx-cursor: hand;
+    -fx-font-size: 14px;
+    -fx-padding: 5px;
+}
