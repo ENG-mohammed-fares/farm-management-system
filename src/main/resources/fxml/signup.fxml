@@ -56,42 +56,74 @@
                        styleClass="input-field"/>
 
             <Label text="Email or Phone" styleClass="field-label"/>
-            <TextField fx:id="emailField"
-                       promptText="Enter your email or phone"
-                       styleClass="input-field"/>
+            <HBox styleClass="input-wrapper" alignment="CENTER_LEFT" spacing="8">
+                <ImageView fitWidth="18" fitHeight="18" preserveRatio="true">
+                    <image>
+                        <Image url="@../images/email_icon.png"/>
+                    </image>
+                </ImageView>
+                <TextField fx:id="emailField"
+                           promptText="Enter your email or phone"
+                           styleClass="input-field-flat"
+                           HBox.hgrow="ALWAYS"/>
+            </HBox>
 
             <Label text="Password" styleClass="field-label"/>
-            <HBox spacing="5" alignment="CENTER_LEFT">
+            <HBox styleClass="input-wrapper" alignment="CENTER_LEFT" spacing="8">
+                <ImageView fitWidth="18" fitHeight="18" preserveRatio="true">
+                    <image>
+                        <Image url="@../images/lock_icon.png"/>
+                    </image>
+                </ImageView>
                 <PasswordField fx:id="passwordField"
                                promptText="Enter your password"
-                               styleClass="input-field"
+                               styleClass="input-field-flat"
                                HBox.hgrow="ALWAYS"/>
                 <TextField fx:id="visiblePasswordField"
                            promptText="Enter your password"
-                           styleClass="input-field"
+                           styleClass="input-field-flat"
                            visible="false"
                            managed="false"
                            HBox.hgrow="ALWAYS"/>
-                <Button text="👁"
-                        styleClass="show-hide-btn"
-                        onAction="#handleShowHidePassword"/>
+                <Button styleClass="show-hide-btn"
+                        onAction="#handleShowHidePassword">
+                    <graphic>
+                        <ImageView fx:id="passwordEyeIcon" fitWidth="18" fitHeight="18" preserveRatio="true">
+                            <image>
+                                <Image url="@../images/eye_closed.png"/>
+                            </image>
+                        </ImageView>
+                    </graphic>
+                </Button>
             </HBox>
 
             <Label text="Confirm Password" styleClass="field-label"/>
-            <HBox spacing="5" alignment="CENTER_LEFT">
+            <HBox styleClass="input-wrapper" alignment="CENTER_LEFT" spacing="8">
+                <ImageView fitWidth="18" fitHeight="18" preserveRatio="true">
+                    <image>
+                        <Image url="@../images/lock_icon.png"/>
+                    </image>
+                </ImageView>
                 <PasswordField fx:id="confirmPasswordField"
                                promptText="Confirm your password"
-                               styleClass="input-field"
+                               styleClass="input-field-flat"
                                HBox.hgrow="ALWAYS"/>
                 <TextField fx:id="visibleConfirmField"
                            promptText="Confirm your password"
-                           styleClass="input-field"
+                           styleClass="input-field-flat"
                            visible="false"
                            managed="false"
                            HBox.hgrow="ALWAYS"/>
-                <Button text="👁"
-                        styleClass="show-hide-btn"
-                        onAction="#handleShowHideConfirm"/>
+                <Button styleClass="show-hide-btn"
+                        onAction="#handleShowHideConfirm">
+                    <graphic>
+                        <ImageView fx:id="confirmEyeIcon" fitWidth="18" fitHeight="18" preserveRatio="true">
+                            <image>
+                                <Image url="@../images/eye_closed.png"/>
+                            </image>
+                        </ImageView>
+                    </graphic>
+                </Button>
             </HBox>
 
             <Label fx:id="errorLabel" styleClass="error-label"/>

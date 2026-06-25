@@ -17,7 +17,7 @@
 
     <dependencies>
 
-        <!-- JavaFX -->
+
         <dependency>
             <groupId>org.openjfx</groupId>
             <artifactId>javafx-controls</artifactId>
@@ -29,14 +29,14 @@
             <version>${javafx.version}</version>
         </dependency>
 
-        <!-- PostgreSQL Driver -->
+
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
             <version>42.7.5</version>
         </dependency>
 
-        <!-- BCrypt for Password Hashing -->
+
         <dependency>
             <groupId>org.mindrot</groupId>
             <artifactId>jbcrypt</artifactId>
@@ -48,7 +48,7 @@
     <build>
         <plugins>
 
-            <!-- JavaFX Maven Plugin -->
+
             <plugin>
                 <groupId>org.openjfx</groupId>
                 <artifactId>javafx-maven-plugin</artifactId>
@@ -58,7 +58,7 @@
                 </configuration>
             </plugin>
 
-            <!-- Maven Compiler Plugin -->
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>

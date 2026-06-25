@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.geometry.*?>
+
+<AnchorPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.smartfarm.controller.IntroController"
+            prefWidth="900" prefHeight="600"
+            stylesheets="@../css/intro.css">
+
+    <Pane AnchorPane.topAnchor="0"
+          AnchorPane.bottomAnchor="0"
+          AnchorPane.leftAnchor="0"
+          AnchorPane.rightAnchor="0"
+          styleClass="intro-bg"/>
+
+    <VBox AnchorPane.topAnchor="0"
+          AnchorPane.bottomAnchor="0"
+          AnchorPane.leftAnchor="0"
+          AnchorPane.rightAnchor="0"
+          alignment="CENTER"
+          spacing="20">
+
+        <ImageView fx:id="loaderGif" fitWidth="80" fitHeight="80" preserveRatio="true" smooth="true">
+            <image>
+                <Image url="@../images/Agriculture_Loader.gif"/>
+            </image>
+        </ImageView>
+
+        <Label fx:id="introTitle" styleClass="intro-title"/>
+
+        <Label text="Loading..." styleClass="intro-subtitle"/>
+
+    </VBox>
+
+</AnchorPane>

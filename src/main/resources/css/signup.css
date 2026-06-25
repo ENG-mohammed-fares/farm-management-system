@@ -57,6 +57,29 @@
     -fx-background-color: #FFFFFF;
 }
 
+.input-wrapper {
+    -fx-background-color: #F5F5F5;
+    -fx-background-radius: 8px;
+    -fx-border-color: #E0E0E0;
+    -fx-border-radius: 8px;
+    -fx-padding: 0 10 0 10;
+}
+
+.input-wrapper:focused-within {
+    -fx-border-color: #2E7D32;
+}
+
+.input-field-flat {
+    -fx-background-color: transparent;
+    -fx-padding: 8px 0;
+    -fx-font-size: 13px;
+    -fx-pref-height: 38px;
+}
+
+.input-field-flat:focused {
+    -fx-background-color: transparent;
+}
+
 .signup-btn {
     -fx-background-color: #2E7D32;
     -fx-text-fill: #FFFFFF;
@@ -79,7 +102,6 @@
 .show-hide-btn {
     -fx-background-color: transparent;
     -fx-cursor: hand;
-    -fx-font-size: 14px;
     -fx-padding: 5px;
 }
 

@@ -2,12 +2,10 @@
     -fx-padding: 0;
 }
 
-
 .left-panel {
     -fx-background-color: #FFFFFF;
     -fx-background-radius: 0;
 }
-
 
 .right-panel {
     -fx-background-color: #2E7D32;
@@ -33,20 +31,27 @@
     -fx-font-family: "Arial";
 }
 
-.input-field {
+.input-wrapper {
     -fx-background-color: #F5F5F5;
     -fx-background-radius: 8px;
     -fx-border-color: #E0E0E0;
     -fx-border-radius: 8px;
-    -fx-padding: 10px;
-    -fx-font-size: 13px;
-    -fx-pref-height: 40px;
-    -fx-max-width: Infinity;
+    -fx-padding: 0 10 0 10;
 }
 
-.input-field:focused {
+.input-wrapper:focused-within {
     -fx-border-color: #2E7D32;
-    -fx-background-color: #FFFFFF;
+}
+
+.input-field-flat {
+    -fx-background-color: transparent;
+    -fx-padding: 8px 0;
+    -fx-font-size: 13px;
+    -fx-pref-height: 38px;
+}
+
+.input-field-flat:focused {
+    -fx-background-color: transparent;
 }
 
 .login-btn {
@@ -79,6 +84,15 @@
     -fx-font-weight: bold;
 }
 
+.forgot-link {
+    -fx-text-fill: #2E7D32;
+    -fx-font-size: 11px;
+}
+
+.dark-mode .forgot-link {
+    -fx-text-fill: #81C784;
+}
+
 .right-title {
     -fx-font-size: 22px;
     -fx-font-weight: bold;
@@ -105,7 +119,6 @@
 .show-hide-btn {
     -fx-background-color: transparent;
     -fx-cursor: hand;
-    -fx-font-size: 16px;
     -fx-padding: 5px;
 }
 
@@ -121,36 +134,9 @@
     -fx-font-family: "Arial";
 }
 
-.project-name-label {
-    -fx-font-size: 18px;
-    -fx-font-weight: bold;
-    -fx-text-fill: #FFFFFF;
-    -fx-font-family: "Arial";
-}
-
-.project-sub-label {
-    -fx-font-size: 14px;
-    -fx-text-fill: #C8E6C9;
-    -fx-font-family: "Arial";
-}
-
-.version-label {
-    -fx-font-size: 11px;
-    -fx-text-fill: #A5D6A7;
-    -fx-font-family: "Arial";
-}
-
-.stats-label {
-    -fx-font-size: 13px;
-    -fx-text-fill: #C8E6C9;
-    -fx-font-family: "Arial";
-    -fx-text-alignment: CENTER;
-}
-
 .dark-mode {
     -fx-background-color: #1E1E1E;
 }
-
 
 .dark-mode .left-panel {
     -fx-background-color: #1E1E1E;
@@ -174,10 +160,13 @@
     -fx-text-fill: #AAAAAA;
 }
 
-.dark-mode .input-field {
+.dark-mode .input-wrapper {
     -fx-background-color: #2D2D2D;
-    -fx-text-fill: #FFFFFF;
     -fx-border-color: #444444;
+}
+
+.dark-mode .input-field-flat {
+    -fx-text-fill: #FFFFFF;
 }
 
 .dark-mode .small-label {

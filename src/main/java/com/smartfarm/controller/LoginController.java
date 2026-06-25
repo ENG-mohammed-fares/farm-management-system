@@ -16,19 +16,32 @@ import javafx.util.Duration;
 
 public class LoginController {
 
+    @FXML private VBox loginView;
+    @FXML private VBox forgotView;
+
     @FXML private TextField emailField;
     @FXML private PasswordField passwordField;
     @FXML private TextField visiblePasswordField;
+    @FXML private ImageView passwordEyeIcon;
     @FXML private Label errorLabel;
     @FXML private Button loginButton;
+
+    @FXML private TextField forgotEmailField;
+    @FXML private PasswordField newPasswordField;
+    @FXML private TextField visibleNewPasswordField;
+    @FXML private ImageView newPasswordEyeIcon;
+    @FXML private PasswordField confirmNewPasswordField;
+    @FXML private TextField visibleConfirmNewPasswordField;
+    @FXML private ImageView confirmNewPasswordEyeIcon;
+    @FXML private Label forgotErrorLabel;
+    @FXML private Button resetPasswordButton;
+
     @FXML private Button themeToggleBtn;
     @FXML private ImageView themeIcon;
     @FXML private VBox leftPanel;
     @FXML private StackPane rightPanel;
     @FXML private Label smartFarmLabel;
     @FXML private Label greetingLabel;
-    @FXML private Label projectNameLabel;
-    @FXML private Label statsLabel;
 
     private boolean isDarkMode = false;
 
@@ -40,8 +53,6 @@ public class LoginController {
         startBubblesAnimation();
         startTypewriterAnimation();
         startGreetingAnimation();
-        startProjectNameAnimation();
-        startStatsAnimation();
     }
 
     private void fadeInAnimation() {
@@ -136,45 +147,12 @@ public class LoginController {
         new ParallelTransition(fade, scale).play();
     }
 
-    private void startProjectNameAnimation() {
-        String fullText = "🌿 Smart Farm";
-        projectNameLabel.setText("");
-
-        Timeline timeline = new Timeline();
-        for (int i = 0; i < fullText.length(); i++) {
-            final int index = i;
-            KeyFrame frame = new KeyFrame(Duration.millis(500 + 80 * i), e ->
-                    projectNameLabel.setText(fullText.substring(0, index + 1))
-            );
-            timeline.getKeyFrames().add(frame);
-        }
-        timeline.play();
-    }
-
-    private void startStatsAnimation() {
-        statsLabel.setOpacity(0);
-        statsLabel.setTranslateY(20);
-        statsLabel.setText("🌱 Join 10,000+ farmers\n   managing smarter");
-
-        FadeTransition fade = new FadeTransition(Duration.millis(500), statsLabel);
-        fade.setFromValue(0);
-        fade.setToValue(1);
-        fade.setDelay(Duration.millis(1800));
-
-        TranslateTransition slide = new TranslateTransition(Duration.millis(500), statsLabel);
-        slide.setFromY(20);
-        slide.setToY(0);
-        slide.setDelay(Duration.millis(1800));
-
-        new ParallelTransition(fade, slide).play();
-    }
-
     private void setupEmailDetection() {
         emailField.textProperty().addListener((obs, oldVal, newVal) -> {
             if (newVal.contains("@")) {
-                emailField.setPromptText("📧 Enter your email");
-            } else if (newVal.matches("[0-9]+")) {
-                emailField.setPromptText("📱 Enter your phone");
+                emailField.setPromptText("Enter your email");
+            } else if (newVal.matches("[+]?[0-9\\-\\s]+")) {
+                emailField.setPromptText("Enter your phone");
             } else {
                 emailField.setPromptText("Enter your email or phone");
             }
@@ -183,6 +161,8 @@ public class LoginController {
 
     private void setupPasswordToggle() {
         visiblePasswordField.textProperty().bindBidirectional(passwordField.textProperty());
+        visibleNewPasswordField.textProperty().bindBidirectional(newPasswordField.textProperty());
+        visibleConfirmNewPasswordField.textProperty().bindBidirectional(confirmNewPasswordField.textProperty());
     }
 
     @FXML
@@ -213,6 +193,57 @@ public class LoginController {
     }
 
     @FXML
+    private void handleForgotPassword() {
+        switchView(loginView, forgotView);
+    }
+
+    @FXML
+    private void handleBackToLogin() {
+        switchView(forgotView, loginView);
+    }
+
+    private void switchView(VBox from, VBox to) {
+        FadeTransition fadeOut = new FadeTransition(Duration.millis(200), from);
+        fadeOut.setFromValue(1);
+        fadeOut.setToValue(0);
+        fadeOut.setOnFinished(e -> {
+            from.setVisible(false);
+            from.setManaged(false);
+
+            to.setVisible(true);
+            to.setManaged(true);
+            to.setOpacity(0);
+
+            FadeTransition fadeIn = new FadeTransition(Duration.millis(300), to);
+            fadeIn.setFromValue(0);
+            fadeIn.setToValue(1);
+            fadeIn.play();
+        });
+        fadeOut.play();
+    }
+
+    @FXML
+    private void handleResetPassword() {
+        String input = forgotEmailField.getText().trim();
+        String newPassword = newPasswordField.getText().trim();
+        String confirmPassword = confirmNewPasswordField.getText().trim();
+
+        if (input.isEmpty() || newPassword.isEmpty() || confirmPassword.isEmpty()) {
+            forgotErrorLabel.setText("Please fill in all fields");
+            shakeAnimation(resetPasswordButton);
+            return;
+        }
+
+        if (!newPassword.equals(confirmPassword)) {
+            forgotErrorLabel.setText("Passwords do not match");
+            shakeAnimation(resetPasswordButton);
+            return;
+        }
+
+        forgotErrorLabel.setText("");
+    }
+
+    @FXML
     private void handleShowHidePassword() {
         if (passwordField.isVisible()) {
             passwordField.setVisible(false);
@@ -220,12 +251,52 @@ public class LoginController {
             visiblePasswordField.setVisible(true);
             visiblePasswordField.setManaged(true);
             visiblePasswordField.requestFocus();
+            passwordEyeIcon.setImage(new Image(getClass().getResourceAsStream("/images/eye_open.png")));
         } else {
             visiblePasswordField.setVisible(false);
             visiblePasswordField.setManaged(false);
             passwordField.setVisible(true);
             passwordField.setManaged(true);
             passwordField.requestFocus();
+            passwordEyeIcon.setImage(new Image(getClass().getResourceAsStream("/images/eye_closed.png")));
+        }
+    }
+
+    @FXML
+    private void handleShowHideNewPassword() {
+        if (newPasswordField.isVisible()) {
+            newPasswordField.setVisible(false);
+            newPasswordField.setManaged(false);
+            visibleNewPasswordField.setVisible(true);
+            visibleNewPasswordField.setManaged(true);
+            visibleNewPasswordField.requestFocus();
+            newPasswordEyeIcon.setImage(new Image(getClass().getResourceAsStream("/images/eye_open.png")));
+        } else {
+            visibleNewPasswordField.setVisible(false);
+            visibleNewPasswordField.setManaged(false);
+            newPasswordField.setVisible(true);
+            newPasswordField.setManaged(true);
+            newPasswordField.requestFocus();
+            newPasswordEyeIcon.setImage(new Image(getClass().getResourceAsStream("/images/eye_closed.png")));
+        }
+    }
+
+    @FXML
+    private void handleShowHideConfirmNewPassword() {
+        if (confirmNewPasswordField.isVisible()) {
+            confirmNewPasswordField.setVisible(false);
+            confirmNewPasswordField.setManaged(false);
+            visibleConfirmNewPasswordField.setVisible(true);
+            visibleConfirmNewPasswordField.setManaged(true);
+            visibleConfirmNewPasswordField.requestFocus();
+            confirmNewPasswordEyeIcon.setImage(new Image(getClass().getResourceAsStream("/images/eye_open.png")));
+        } else {
+            visibleConfirmNewPasswordField.setVisible(false);
+            visibleConfirmNewPasswordField.setManaged(false);
+            confirmNewPasswordField.setVisible(true);
+            confirmNewPasswordField.setManaged(true);
+            confirmNewPasswordField.requestFocus();
+            confirmNewPasswordEyeIcon.setImage(new Image(getClass().getResourceAsStream("/images/eye_closed.png")));
         }
     }
 
