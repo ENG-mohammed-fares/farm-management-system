@@ -13,9 +13,6 @@ public class Main extends Application {
         Scene scene = new Scene(loader.load());
         stage.setTitle("Smart Farm Management");
         stage.setScene(scene);
-        stage.setResizable(true);
-        stage.setMinWidth(900);
-        stage.setMinHeight(550);
         stage.sizeToScene();
         stage.show();
     }
