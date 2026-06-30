@@ -1,14 +1,241 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import java.lang.*?>
-<?import java.util.*?>
-<?import javafx.scene.*?>
-<?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.geometry.*?>
 
 <AnchorPane xmlns="http://javafx.com/javafx"
             xmlns:fx="http://javafx.com/fxml"
-            fx:controller="CONTROLLER_NAME"
-            prefHeight="400.0" prefWidth="600.0">
+            fx:controller="com.smartfarm.controller.LoginController"
+            prefWidth="900" prefHeight="550"
+            style="-fx-background-color: #2E7D32; -fx-padding: 0;"
+            stylesheets="@../css/login.css">
+
+    <VBox fx:id="leftPanel"
+          AnchorPane.leftAnchor="0" AnchorPane.topAnchor="0"
+          AnchorPane.bottomAnchor="0"
+          prefWidth="380"
+          styleClass="left-panel"
+          spacing="15" alignment="CENTER_LEFT">
+
+        <padding>
+            <Insets top="40" right="50" bottom="40" left="50"/>
+        </padding>
+
+        <!-- ===== Login View ===== -->
+        <VBox fx:id="loginView" spacing="15">
+
+            <Label text="Welcome Back" styleClass="welcome-label"/>
+            <Label text="Log In" styleClass="title-label"/>
+
+            <Label text="Email or Phone" styleClass="field-label"/>
+            <HBox styleClass="input-wrapper" alignment="CENTER_LEFT" spacing="8">
+                <ImageView fitWidth="18" fitHeight="18" preserveRatio="true">
+                    <image>
+                        <Image url="@../images/email_icon.png"/>
+                    </image>
+                </ImageView>
+                <TextField fx:id="emailField"
+                           promptText="Enter your email or phone"
+                           styleClass="input-field-flat"
+                           HBox.hgrow="ALWAYS"/>
+            </HBox>
+
+            <Label text="Password" styleClass="field-label"/>
+            <HBox styleClass="input-wrapper" alignment="CENTER_LEFT" spacing="8">
+                <ImageView fitWidth="18" fitHeight="18" preserveRatio="true">
+                    <image>
+                        <Image url="@../images/lock_icon.png"/>
+                    </image>
+                </ImageView>
+                <PasswordField fx:id="passwordField"
+                               promptText="Enter your password"
+                               styleClass="input-field-flat"
+                               HBox.hgrow="ALWAYS"/>
+                <TextField fx:id="visiblePasswordField"
+                           promptText="Enter your password"
+                           styleClass="input-field-flat"
+                           visible="false"
+                           managed="false"
+                           HBox.hgrow="ALWAYS"/>
+                <Button styleClass="show-hide-btn"
+                        onAction="#handleShowHidePassword">
+                    <graphic>
+                        <ImageView fx:id="passwordEyeIcon" fitWidth="18" fitHeight="18" preserveRatio="true">
+                            <image>
+                                <Image url="@../images/eye_closed.png"/>
+                            </image>
+                        </ImageView>
+                    </graphic>
+                </Button>
+            </HBox>
+
+            <HBox alignment="CENTER_RIGHT">
+                <Hyperlink text="Forgot Password?"
+                           styleClass="forgot-link"
+                           onAction="#handleForgotPassword"/>
+            </HBox>
+
+            <Label fx:id="errorLabel" styleClass="error-label"/>
+
+            <Button fx:id="loginButton"
+                    text="Log In"
+                    styleClass="login-btn"
+                    onAction="#handleLogin"
+                    maxWidth="Infinity"/>
+
+            <HBox alignment="CENTER" spacing="5">
+                <Label text="Don't have an account?" styleClass="small-label"/>
+                <Hyperlink text="Sign Up"
+                           styleClass="signup-link"
+                           onAction="#handleSignUp"/>
+            </HBox>
+
+        </VBox>
+
+        <!-- ===== Forgot Password View ===== -->
+        <VBox fx:id="forgotView" spacing="15" visible="false" managed="false">
+
+            <Label text="Reset your password" styleClass="welcome-label"/>
+            <Label text="Forgot Password" styleClass="title-label"/>
+
+            <Label text="Email or Phone" styleClass="field-label"/>
+            <HBox styleClass="input-wrapper" alignment="CENTER_LEFT" spacing="8">
+                <ImageView fitWidth="18" fitHeight="18" preserveRatio="true">
+                    <image>
+                        <Image url="@../images/email_icon.png"/>
+                    </image>
+                </ImageView>
+                <TextField fx:id="forgotEmailField"
+                           promptText="Enter your email or phone"
+                           styleClass="input-field-flat"
+                           HBox.hgrow="ALWAYS"/>
+            </HBox>
+
+            <Label text="New Password" styleClass="field-label"/>
+            <HBox styleClass="input-wrapper" alignment="CENTER_LEFT" spacing="8">
+                <ImageView fitWidth="18" fitHeight="18" preserveRatio="true">
+                    <image>
+                        <Image url="@../images/lock_icon.png"/>
+                    </image>
+                </ImageView>
+                <PasswordField fx:id="newPasswordField"
+                               promptText="Enter new password"
+                               styleClass="input-field-flat"
+                               HBox.hgrow="ALWAYS"/>
+                <TextField fx:id="visibleNewPasswordField"
+                           promptText="Enter new password"
+                           styleClass="input-field-flat"
+                           visible="false"
+                           managed="false"
+                           HBox.hgrow="ALWAYS"/>
+                <Button styleClass="show-hide-btn"
+                        onAction="#handleShowHideNewPassword">
+                    <graphic>
+                        <ImageView fx:id="newPasswordEyeIcon" fitWidth="18" fitHeight="18" preserveRatio="true">
+                            <image>
+                                <Image url="@../images/eye_closed.png"/>
+                            </image>
+                        </ImageView>
+                    </graphic>
+                </Button>
+            </HBox>
+
+            <Label text="Confirm New Password" styleClass="field-label"/>
+            <HBox styleClass="input-wrapper" alignment="CENTER_LEFT" spacing="8">
+                <ImageView fitWidth="18" fitHeight="18" preserveRatio="true">
+                    <image>
+                        <Image url="@../images/lock_icon.png"/>
+                    </image>
+                </ImageView>
+                <PasswordField fx:id="confirmNewPasswordField"
+                               promptText="Confirm new password"
+                               styleClass="input-field-flat"
+                               HBox.hgrow="ALWAYS"/>
+                <TextField fx:id="visibleConfirmNewPasswordField"
+                           promptText="Confirm new password"
+                           styleClass="input-field-flat"
+                           visible="false"
+                           managed="false"
+                           HBox.hgrow="ALWAYS"/>
+                <Button styleClass="show-hide-btn"
+                        onAction="#handleShowHideConfirmNewPassword">
+                    <graphic>
+                        <ImageView fx:id="confirmNewPasswordEyeIcon" fitWidth="18" fitHeight="18" preserveRatio="true">
+                            <image>
+                                <Image url="@../images/eye_closed.png"/>
+                            </image>
+                        </ImageView>
+                    </graphic>
+                </Button>
+            </HBox>
+
+            <Label fx:id="forgotErrorLabel" styleClass="error-label"/>
+
+            <Button fx:id="resetPasswordButton"
+                    text="Reset Password"
+                    styleClass="login-btn"
+                    onAction="#handleResetPassword"
+                    maxWidth="Infinity"/>
+
+            <HBox alignment="CENTER">
+                <Hyperlink text="Back to Login"
+                           styleClass="signup-link"
+                           onAction="#handleBackToLogin"/>
+            </HBox>
+
+        </VBox>
+
+    </VBox>
+
+    <StackPane fx:id="rightPanel"
+               AnchorPane.rightAnchor="0"
+               AnchorPane.topAnchor="0"
+               AnchorPane.bottomAnchor="0"
+               AnchorPane.leftAnchor="380"
+               styleClass="right-panel">
+
+        <VBox alignment="TOP_CENTER" spacing="15">
+            <padding>
+                <Insets top="40"/>
+            </padding>
+
+            <Label fx:id="greetingLabel" styleClass="greeting-label"/>
+
+        </VBox>
+
+        <VBox alignment="BOTTOM_CENTER" spacing="10">
+            <padding>
+                <Insets bottom="60"/>
+            </padding>
+            <Label fx:id="smartFarmLabel" text="Smart Farm Management" styleClass="right-title"/>
+            <Label text="Manage your farm smarter" styleClass="right-subtitle"/>
+        </VBox>
+
+        <ImageView fitWidth="340" fitHeight="340"
+                   preserveRatio="true"
+                   pickOnBounds="true"
+                   smooth="true">
+            <image>
+                <Image url="@../images/11.png"/>
+            </image>
+        </ImageView>
+
+    </StackPane>
+
+    <Button fx:id="themeToggleBtn"
+            styleClass="theme-btn"
+            AnchorPane.topAnchor="-40"
+            AnchorPane.leftAnchor="-40"
+            onAction="#handleThemeToggle">
+        <graphic>
+            <ImageView fx:id="themeIcon" fitWidth="120" fitHeight="120">
+                <image>
+                    <Image url="@../images/sun.png"/>
+                </image>
+            </ImageView>
+        </graphic>
+    </Button>
 
 </AnchorPane>
