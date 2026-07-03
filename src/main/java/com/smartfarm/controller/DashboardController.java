@@ -1,12 +1,17 @@
 package com.smartfarm.controller;
 
+import java.util.Optional;
+
 import javafx.animation.RotateTransition;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.StackPane;
 import javafx.util.Duration;
+import javafx.stage.Stage;
 
 public class DashboardController {
 
@@ -26,6 +31,7 @@ public class DashboardController {
     @FXML private Button btnHistory;
     @FXML private Button btnReports;
     @FXML private Button btnSettings;
+    @FXML private Button btnQuit;
 
     private boolean isDarkMode = false;
     private Button activeButton;
@@ -107,12 +113,29 @@ private void setActive(Button button, String title) {
     }
 
     @FXML
-    private void handleQuit() {
-        System.exit(0);
+   private void handleQuit() {
+    Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+    alert.setTitle("Confirm Quit");
+    alert.setHeaderText("Are you sure you want to quit?");
+    alert.setContentText("All unsaved changes will be lost.");
+    Stage stage = (Stage) alert.getDialogPane().getScene().getWindow();
+     stage.getIcons().add(new Image(getClass().getResourceAsStream("/images/logo.png")));
+
+    Optional<ButtonType> result = alert.showAndWait();
+
+    if (result.isPresent() && result.get() == ButtonType.OK) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/login.fxml"));
+            Scene scene = new Scene(loader.load());
+
+             stage = (Stage) btnQuit.getScene().getWindow();
+            stage.setScene(scene);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
-
-    
-
+}
     @FXML
     private void handleThemeToggle() {
         RotateTransition rotate = new RotateTransition(Duration.millis(300), themeToggleBtn);
