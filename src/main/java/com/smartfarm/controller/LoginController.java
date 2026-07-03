@@ -120,13 +120,13 @@ public class LoginController {
         int hour = java.time.LocalTime.now().getHour();
         String greeting;
         if (hour >= 5 && hour < 12) {
-            greeting = "🌅 Good Morning!";
+            greeting = "☀ Good Morning!";
         } else if (hour >= 12 && hour < 17) {
-            greeting = "☀️ Good Afternoon!";
+            greeting = "Good Afternoon!";
         } else if (hour >= 17 && hour < 21) {
-            greeting = "🌆 Good Evening!";
+            greeting = "Good Evening!";
         } else {
-            greeting = "🌙 Good Night!";
+            greeting = "Good Night!";
         }
 
         greetingLabel.setText(greeting);
