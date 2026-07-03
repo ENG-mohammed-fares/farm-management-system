@@ -176,8 +176,15 @@ public class LoginController {
             shakeAnimation(emailField.getParent() != null ? emailField : loginButton);
             return;
         }
-
-        errorLabel.setText("");
+ try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/dashboard.fxml"));
+            Scene scene = new Scene(loader.load());
+            Stage stage = (Stage) loginButton.getScene().getWindow();
+            stage.setScene(scene);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+      
     }
 
     @FXML

@@ -10,7 +10,8 @@ public class Main extends Application {
 
     @Override
     public void start(Stage stage) throws Exception {
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/intro.fxml"));
+       FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/intro.fxml"));
+       //FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/dashboard.fxml"));
         Scene scene = new Scene(loader.load());
         stage.setTitle("Smart Farm Management");
         stage.getIcons().add(new Image(getClass().getResourceAsStream("/images/logo.png")));
