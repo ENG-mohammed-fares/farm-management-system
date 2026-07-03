@@ -31,15 +31,21 @@
     -fx-background-color: rgba(255,255,255,0.15);
 }
 
+/* الزر النشط: لون النص فقط (الخلفية البيضاء صارت من المستطيل المنزلق) */
 .nav-active {
-    -fx-background-color: #FFFFFF;
+    -fx-background-color: transparent;
     -fx-text-fill: #2E7D32;
     -fx-font-weight: bold;
-    -fx-background-radius: 12 0 0 12;
 }
 
 .nav-active:hover {
+    -fx-background-color: transparent;
+}
+
+/* ===== المستطيل المنزلق (نفس شكل الزر) ===== */
+.slide-highlight {
     -fx-background-color: #FFFFFF;
+    -fx-background-radius: 12 0 0 12;
 }
 
 .main-area {
@@ -49,7 +55,6 @@
 .content-wrapper {
     -fx-background-color: #FFFFFF;
     -fx-background-radius: 18;
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.12), 15, 0, 0, 3);
 }
 
 .top-bar {
@@ -114,11 +119,16 @@
 }
 
 .dark-mode .nav-active {
-    -fx-background-color: #2D2D2D;
+    -fx-background-color: transparent;
     -fx-text-fill: #81C784;
 }
 
 .dark-mode .nav-active:hover {
+    -fx-background-color: transparent;
+}
+
+
+.dark-mode .slide-highlight {
     -fx-background-color: #2D2D2D;
 }
 
