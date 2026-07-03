@@ -23,7 +23,7 @@
             <Insets top="40" right="50" bottom="40" left="50"/>
         </padding>
 
-        <!-- ===== Login View ===== -->
+
         <VBox fx:id="loginView" spacing="15">
 
             <Label text="Welcome Back" styleClass="welcome-label"/>
@@ -94,7 +94,7 @@
 
         </VBox>
 
-        <!-- ===== Forgot Password View ===== -->
+
         <VBox fx:id="forgotView" spacing="15" visible="false" managed="false">
 
             <Label text="." styleClass="welcome-label"/>
