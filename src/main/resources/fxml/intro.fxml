@@ -25,7 +25,7 @@
 
         <ImageView fx:id="loaderGif" fitWidth="80" fitHeight="80" preserveRatio="true" smooth="true">
             <image>
-                <Image url="@../images/Agriculture_Loader.gif"/>
+                    <Image url="@../images/Agriculture Loader.gif"/>
             </image>
         </ImageView>
 
