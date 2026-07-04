@@ -1,12 +1,15 @@
 package com.smartfarm.controller;
 
 import javafx.animation.*;
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
@@ -44,6 +47,8 @@ public class LoginController {
     @FXML private Label greetingLabel;
 
     private boolean isDarkMode = false;
+    private Label capsLockLabel;
+    private String loginButtonOriginalText;
 
     @FXML
     public void initialize() {
@@ -53,6 +58,67 @@ public class LoginController {
         startBubblesAnimation();
         startTypewriterAnimation();
         startGreetingAnimation();
+        setupEnterKey();
+        setupAutoFocus();
+        setupCapsLockWarning();
+    }
+
+    private void setupEnterKey() {
+        loginView.addEventHandler(KeyEvent.KEY_PRESSED, e -> {
+            if (e.getCode() == KeyCode.ENTER && !loginButton.isDisabled()) {
+                handleLogin();
+                e.consume();
+            }
+        });
+
+        forgotView.addEventHandler(KeyEvent.KEY_PRESSED, e -> {
+            if (e.getCode() == KeyCode.ENTER && !resetPasswordButton.isDisabled()) {
+                handleResetPassword();
+                e.consume();
+            }
+        });
+    }
+
+    private void setupAutoFocus() {
+        Platform.runLater(() -> emailField.requestFocus());
+    }
+
+    private void setupCapsLockWarning() {
+        capsLockLabel = new Label("\u26A0 Caps Lock is ON");
+        capsLockLabel.setStyle("-fx-text-fill: #E68A00; -fx-font-size: 11px; -fx-padding: 2 0 0 5;");
+        capsLockLabel.setVisible(false);
+        capsLockLabel.setManaged(false);
+
+        int idx = loginView.getChildren().indexOf(errorLabel);
+        if (idx >= 0) {
+            loginView.getChildren().add(idx, capsLockLabel);
+        }
+
+        passwordField.addEventHandler(KeyEvent.KEY_PRESSED, this::checkCapsLock);
+        passwordField.addEventHandler(KeyEvent.KEY_RELEASED, this::checkCapsLock);
+        visiblePasswordField.addEventHandler(KeyEvent.KEY_PRESSED, this::checkCapsLock);
+        visiblePasswordField.addEventHandler(KeyEvent.KEY_RELEASED, this::checkCapsLock);
+        newPasswordField.addEventHandler(KeyEvent.KEY_PRESSED, this::checkCapsLock);
+        newPasswordField.addEventHandler(KeyEvent.KEY_RELEASED, this::checkCapsLock);
+        confirmNewPasswordField.addEventHandler(KeyEvent.KEY_PRESSED, this::checkCapsLock);
+        confirmNewPasswordField.addEventHandler(KeyEvent.KEY_RELEASED, this::checkCapsLock);
+    }
+
+    private void checkCapsLock(KeyEvent e) {
+        boolean capsOn = java.awt.Toolkit.getDefaultToolkit().getLockingKeyState(java.awt.event.KeyEvent.VK_CAPS_LOCK);
+        capsLockLabel.setVisible(capsOn);
+        capsLockLabel.setManaged(capsOn);
+    }
+
+    private void setButtonLoading(Button button, boolean loading) {
+        if (loading) {
+            loginButtonOriginalText = button.getText();
+            button.setDisable(true);
+            button.setText("⏳  Please wait...");
+        } else {
+            button.setDisable(false);
+            button.setText(loginButtonOriginalText);
+        }
     }
 
     private void fadeInAnimation() {
@@ -120,7 +186,7 @@ public class LoginController {
         int hour = java.time.LocalTime.now().getHour();
         String greeting;
         if (hour >= 5 && hour < 12) {
-            greeting = "☀ Good Morning!";
+            greeting = "\u2600 Good Morning!";
         } else if (hour >= 12 && hour < 17) {
             greeting = "Good Afternoon!";
         } else if (hour >= 17 && hour < 21) {
@@ -171,20 +237,31 @@ public class LoginController {
         String password = passwordField.getText().trim();
 
         if (input.isEmpty() || password.isEmpty()) {
-            shakeAnimation(errorLabel);
             errorLabel.setText("Please fill in all fields");
-            shakeAnimation(emailField.getParent() != null ? emailField : loginButton);
+            if (input.isEmpty()) {
+                shakeAnimation(emailField.getParent());
+            } else {
+                shakeAnimation(passwordField.getParent());
+            }
             return;
         }
- try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/dashboard.fxml"));
-            Scene scene = new Scene(loader.load());
-            Stage stage = (Stage) loginButton.getScene().getWindow();
-            stage.setScene(scene);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-      
+
+        setButtonLoading(loginButton, true);
+
+        PauseTransition delay = new PauseTransition(Duration.millis(800));
+        delay.setOnFinished(e -> {
+            try {
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/dashboard.fxml"));
+                Scene scene = new Scene(loader.load());
+                Stage stage = (Stage) loginButton.getScene().getWindow();
+                stage.setScene(scene);
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                setButtonLoading(loginButton, false);
+                errorLabel.setText("Something went wrong");
+            }
+        });
+        delay.play();
     }
 
     @FXML
@@ -202,11 +279,13 @@ public class LoginController {
     @FXML
     private void handleForgotPassword() {
         switchView(loginView, forgotView);
+        Platform.runLater(() -> forgotEmailField.requestFocus());
     }
 
     @FXML
     private void handleBackToLogin() {
         switchView(forgotView, loginView);
+        Platform.runLater(() -> emailField.requestFocus());
     }
 
     private void switchView(VBox from, VBox to) {
@@ -247,7 +326,23 @@ public class LoginController {
             return;
         }
 
-        forgotErrorLabel.setText("");
+        setButtonLoading(resetPasswordButton, true);
+
+        PauseTransition delay = new PauseTransition(Duration.millis(800));
+        delay.setOnFinished(e -> {
+            setButtonLoading(resetPasswordButton, false);
+            forgotErrorLabel.setStyle("-fx-text-fill: #2E7D32;");
+            forgotErrorLabel.setText("\u2714 Password reset successfully!");
+
+            PauseTransition back = new PauseTransition(Duration.millis(1500));
+            back.setOnFinished(ev -> {
+                forgotErrorLabel.setText("");
+                forgotErrorLabel.setStyle("");
+                handleBackToLogin();
+            });
+            back.play();
+        });
+        delay.play();
     }
 
     @FXML
