@@ -31,7 +31,6 @@
     -fx-background-color: rgba(255,255,255,0.15);
 }
 
-/* الزر النشط: لون النص فقط (الخلفية البيضاء صارت من المستطيل المنزلق) */
 .nav-active {
     -fx-background-color: transparent;
     -fx-text-fill: #2E7D32;
@@ -42,7 +41,6 @@
     -fx-background-color: transparent;
 }
 
-/* ===== المستطيل المنزلق (نفس شكل الزر) ===== */
 .slide-highlight {
     -fx-background-color: #FFFFFF;
     -fx-background-radius: 12 0 0 12;
@@ -127,7 +125,6 @@
     -fx-background-color: transparent;
 }
 
-
 .dark-mode .slide-highlight {
     -fx-background-color: #2D2D2D;
 }
@@ -144,3 +141,186 @@
 .dark-mode .user-name {
     -fx-text-fill: #CCCCCC;
 }
+
+.dash-root {
+    -fx-background-color: transparent;
+}
+
+.dash-card {
+    -fx-background-color: #FFFFFF;
+    -fx-background-radius: 15;
+    -fx-border-color: #ECECEC;
+    -fx-border-radius: 15;
+    -fx-border-width: 1;
+    -fx-padding: 18 20 18 20;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.08), 10, 0, 0, 3);
+}
+
+.dark-mode .dash-card {
+    -fx-background-color: #2D2D2D;
+    -fx-border-color: #3A3A3A;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.35), 10, 0, 0, 3);
+}
+
+.stat-icon {
+    -fx-font-size: 20px;
+    -fx-min-width: 44; -fx-min-height: 44;
+    -fx-max-width: 44; -fx-max-height: 44;
+    -fx-alignment: center;
+    -fx-background-color: #E8F5E9;
+    -fx-background-radius: 12;
+    -fx-text-fill: #2E7D32;
+}
+
+.dark-mode .stat-icon {
+    -fx-background-color: #1A3A1A;
+    -fx-text-fill: #81C784;
+}
+
+.stat-value {
+    -fx-font-size: 28px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #222222;
+}
+
+.dark-mode .stat-value {
+    -fx-text-fill: #FFFFFF;
+}
+
+.stat-label {
+    -fx-font-size: 12px;
+    -fx-text-fill: #888888;
+}
+
+.dark-mode .stat-label {
+    -fx-text-fill: #AAAAAA;
+}
+
+.card-title {
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #333333;
+}
+
+.dark-mode .card-title {
+    -fx-text-fill: #EEEEEE;
+}
+
+.card-sub {
+    -fx-font-size: 12px;
+    -fx-text-fill: #888888;
+}
+
+.dark-mode .card-sub {
+    -fx-text-fill: #AAAAAA;
+}
+
+.big-value {
+    -fx-font-size: 30px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #2E7D32;
+}
+
+.dark-mode .big-value {
+    -fx-text-fill: #81C784;
+}
+
+.pct-up   { -fx-text-fill: #2E7D32; -fx-font-size: 12px; -fx-font-weight: bold; }
+.pct-down { -fx-text-fill: #D32F2F; -fx-font-size: 12px; -fx-font-weight: bold; }
+
+.pill-up {
+    -fx-background-color: #E8F5E9; -fx-text-fill: #2E7D32;
+    -fx-font-size: 11px; -fx-font-weight: bold;
+    -fx-padding: 2 8 2 8; -fx-background-radius: 10;
+}
+.pill-down {
+    -fx-background-color: #FDECEA; -fx-text-fill: #D32F2F;
+    -fx-font-size: 11px; -fx-font-weight: bold;
+    -fx-padding: 2 8 2 8; -fx-background-radius: 10;
+}
+.dark-mode .pill-up   { -fx-background-color: #1A3A1A; -fx-text-fill: #81C784; }
+.dark-mode .pill-down { -fx-background-color: #3A1F1F; -fx-text-fill: #EF9A9A; }
+
+.divider {
+    -fx-background-color: #EEEEEE;
+    -fx-min-height: 1; -fx-pref-height: 1; -fx-max-height: 1;
+}
+.dark-mode .divider {
+    -fx-background-color: #3A3A3A;
+}
+
+.ring-track     { -fx-stroke: #ECECEC; }
+.ring-progress  { -fx-stroke: #2E7D32; }
+.ring-sales     { -fx-stroke: #2E7D32; }
+.ring-purchases { -fx-stroke: #D32F2F; }
+.dark-mode .ring-track { -fx-stroke: #3A3A3A; }
+
+.ring-center     { -fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #2E7D32; }
+.ring-center-sub { -fx-font-size: 10px; -fx-text-fill: #888888; }
+.dark-mode .ring-center     { -fx-text-fill: #81C784; }
+.dark-mode .ring-center-sub { -fx-text-fill: #AAAAAA; }
+
+.dot-sale     { -fx-background-color: #2E7D32; -fx-background-radius: 3; }
+.dot-purchase { -fx-background-color: #D32F2F; -fx-background-radius: 3; }
+
+.sparkline {
+    -fx-stroke: #2E7D32;
+    -fx-fill: transparent;
+    -fx-stroke-width: 2;
+}
+
+.avatar {
+    -fx-min-width: 52; -fx-min-height: 52;
+    -fx-max-width: 52; -fx-max-height: 52;
+    -fx-background-color: #2E7D32; -fx-background-radius: 50%;
+    -fx-text-fill: #FFFFFF; -fx-font-size: 18px; -fx-font-weight: bold;
+    -fx-alignment: center;
+}
+.dark-mode .avatar {
+    -fx-background-color: #1A3A1A; -fx-text-fill: #81C784;
+}
+
+.mini-stat-value { -fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #333333; }
+.mini-stat-label { -fx-font-size: 11px; -fx-text-fill: #888888; }
+.dark-mode .mini-stat-value { -fx-text-fill: #EEEEEE; }
+.dark-mode .mini-stat-label { -fx-text-fill: #AAAAAA; }
+
+.badge {
+    -fx-font-size: 10px; -fx-font-weight: bold;
+    -fx-padding: 3 8 3 8; -fx-background-radius: 8;
+}
+.badge-sale     { -fx-background-color: #E8F5E9; -fx-text-fill: #2E7D32; }
+.badge-purchase { -fx-background-color: #FDECEA; -fx-text-fill: #D32F2F; }
+.badge-payment  { -fx-background-color: #FFF4E5; -fx-text-fill: #E68A00; }
+.dark-mode .badge-sale     { -fx-background-color: #1A3A1A; -fx-text-fill: #81C784; }
+.dark-mode .badge-purchase { -fx-background-color: #3A1F1F; -fx-text-fill: #EF9A9A; }
+.dark-mode .badge-payment  { -fx-background-color: #3A3020; -fx-text-fill: #FFCC80; }
+
+.row-icon {
+    -fx-font-size: 16px;
+    -fx-min-width: 36; -fx-min-height: 36;
+    -fx-max-width: 36; -fx-max-height: 36;
+    -fx-alignment: center;
+    -fx-background-color: #E8F5E9;
+    -fx-background-radius: 10;
+}
+.dark-mode .row-icon { -fx-background-color: #1A3A1A; }
+
+.list-primary { -fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #333333; }
+.list-sub     { -fx-font-size: 11px; -fx-text-fill: #999999; }
+.dark-mode .list-primary { -fx-text-fill: #EEEEEE; }
+.dark-mode .list-sub     { -fx-text-fill: #999999; }
+
+.quick-btn {
+    -fx-background-color: #F5F7F5;
+    -fx-text-fill: #2E7D32;
+    -fx-font-size: 13px; -fx-font-weight: bold;
+    -fx-background-radius: 12;
+    -fx-padding: 14 12 14 12;
+    -fx-alignment: center-left;
+    -fx-cursor: hand;
+    -fx-graphic-text-gap: 8;
+}
+.quick-btn:hover { -fx-background-color: #E8F5E9; }
+.dark-mode .quick-btn        { -fx-background-color: #1A3A1A; -fx-text-fill: #81C784; }
+.dark-mode .quick-btn:hover  { -fx-background-color: #245024; }
