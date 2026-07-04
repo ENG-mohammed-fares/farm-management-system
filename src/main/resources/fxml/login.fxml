@@ -1,70 +1,48 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.layout.*?>
+<?import javafx.geometry.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.image.*?>
-<?import javafx.geometry.*?>
+<?import javafx.scene.layout.*?>
 
-<AnchorPane xmlns="http://javafx.com/javafx"
-            xmlns:fx="http://javafx.com/fxml"
-            fx:controller="com.smartfarm.controller.LoginController"
-            prefWidth="900" prefHeight="550"
-            style="-fx-background-color: #2E7D32; -fx-padding: 0;"
-            stylesheets="@../css/login.css">
+<AnchorPane prefHeight="550" prefWidth="900" style="-fx-background-color: #2E7D32; -fx-padding: 0;" stylesheets="@../css/login.css" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.smartfarm.controller.LoginController">
 
-    <VBox fx:id="leftPanel"
-          AnchorPane.leftAnchor="0" AnchorPane.topAnchor="0"
-          AnchorPane.bottomAnchor="0"
-          prefWidth="380"
-          styleClass="left-panel"
-          spacing="15" alignment="CENTER_LEFT">
+    <VBox fx:id="leftPanel" alignment="CENTER_LEFT" prefHeight="550.0" prefWidth="403.0" spacing="15" styleClass="left-panel" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0" AnchorPane.topAnchor="0">
 
         <padding>
-            <Insets top="40" right="50" bottom="40" left="50"/>
+            <Insets bottom="40" left="50" right="50" top="40" />
         </padding>
 
 
         <VBox fx:id="loginView" spacing="15">
 
-            <Label text="Welcome Back" styleClass="welcome-label"/>
-            <Label text="Log In" styleClass="title-label"/>
+            <Label styleClass="welcome-label" text="Welcome Back" />
+            <Label styleClass="title-label" text="Log In" />
 
-            <Label text="Email or Phone" styleClass="field-label"/>
-            <HBox styleClass="input-wrapper" alignment="CENTER_LEFT" spacing="8">
-                <ImageView fitWidth="18" fitHeight="18" preserveRatio="true">
+            <Label styleClass="field-label" text="Email or Phone" />
+            <HBox alignment="CENTER_LEFT" spacing="8" styleClass="input-wrapper">
+                <ImageView fitHeight="18" fitWidth="18" preserveRatio="true">
                     <image>
-                        <Image url="@../images/email_icon.png"/>
+                        <Image url="@../images/email_icon.png" />
                     </image>
                 </ImageView>
-                <TextField fx:id="emailField"
-                           promptText="Enter your email or phone"
-                           styleClass="input-field-flat"
-                           HBox.hgrow="ALWAYS"/>
+                <TextField fx:id="emailField" promptText="Enter your email or phone" styleClass="input-field-flat" HBox.hgrow="ALWAYS" />
             </HBox>
 
-            <Label text="Password" styleClass="field-label"/>
-            <HBox styleClass="input-wrapper" alignment="CENTER_LEFT" spacing="8">
-                <ImageView fitWidth="18" fitHeight="18" preserveRatio="true">
+            <Label styleClass="field-label" text="Password" />
+            <HBox alignment="CENTER_LEFT" spacing="8" styleClass="input-wrapper">
+                <ImageView fitHeight="18" fitWidth="18" preserveRatio="true">
                     <image>
-                        <Image url="@../images/lock_icon.png"/>
+                        <Image url="@../images/lock_icon.png" />
                     </image>
                 </ImageView>
-                <PasswordField fx:id="passwordField"
-                               promptText="Enter your password"
-                               styleClass="input-field-flat"
-                               HBox.hgrow="ALWAYS"/>
-                <TextField fx:id="visiblePasswordField"
-                           promptText="Enter your password"
-                           styleClass="input-field-flat"
-                           visible="false"
-                           managed="false"
-                           HBox.hgrow="ALWAYS"/>
-                <Button styleClass="show-hide-btn"
-                        onAction="#handleShowHidePassword">
+                <PasswordField fx:id="passwordField" promptText="Enter your password" styleClass="input-field-flat" HBox.hgrow="ALWAYS" />
+                <TextField fx:id="visiblePasswordField" managed="false" promptText="Enter your password" styleClass="input-field-flat" visible="false" HBox.hgrow="ALWAYS" />
+                <Button onAction="#handleShowHidePassword" styleClass="show-hide-btn">
                     <graphic>
-                        <ImageView fx:id="passwordEyeIcon" fitWidth="18" fitHeight="18" preserveRatio="true">
+                        <ImageView fx:id="passwordEyeIcon" fitHeight="18" fitWidth="18" preserveRatio="true">
                             <image>
-                                <Image url="@../images/eye_closed.png"/>
+                                <Image url="@../images/eye_closed.png" />
                             </image>
                         </ImageView>
                     </graphic>
@@ -72,167 +50,120 @@
             </HBox>
 
             <HBox alignment="CENTER_RIGHT">
-                <Hyperlink text="Forgot Password?"
-                           styleClass="forgot-link"
-                           onAction="#handleForgotPassword"/>
+                <Hyperlink onAction="#handleForgotPassword" styleClass="forgot-link" text="Forgot Password?" />
             </HBox>
 
-            <Label fx:id="errorLabel" styleClass="error-label"/>
+            <Label fx:id="errorLabel" styleClass="error-label" />
 
-            <Button fx:id="loginButton"
-                    text="Log In"
-                    styleClass="login-btn"
-                    onAction="#handleLogin"
-                    maxWidth="Infinity"/>
+            <Button fx:id="loginButton" maxWidth="Infinity" onAction="#handleLogin" styleClass="login-btn" text="Log In" />
 
             <HBox alignment="CENTER" spacing="5">
-                <Label text="Don't have an account?" styleClass="small-label"/>
-                <Hyperlink text="Sign Up"
-                           styleClass="signup-link"
-                           onAction="#handleSignUp"/>
+                <Label styleClass="small-label" text="Don't have an account?" />
+                <Hyperlink onAction="#handleSignUp" styleClass="signup-link" text="Sign Up" />
             </HBox>
 
         </VBox>
 
 
-        <VBox fx:id="forgotView" spacing="15" visible="false" managed="false">
+        <VBox fx:id="forgotView" managed="false" spacing="15" visible="false">
 
-            <Label text="." styleClass="welcome-label"/>
-            <Label text="Forgot Password" styleClass="title-label"/>
+            <Label styleClass="welcome-label" text="." />
+            <Label styleClass="title-label" text="Forgot Password" />
 
-            <Label text="Email or Phone" styleClass="field-label"/>
-            <HBox styleClass="input-wrapper" alignment="CENTER_LEFT" spacing="8">
-                <ImageView fitWidth="18" fitHeight="18" preserveRatio="true">
+            <Label styleClass="field-label" text="Email or Phone" />
+            <HBox alignment="CENTER_LEFT" spacing="8" styleClass="input-wrapper">
+                <ImageView fitHeight="18" fitWidth="18" preserveRatio="true">
                     <image>
-                        <Image url="@../images/email_icon.png"/>
+                        <Image url="@../images/email_icon.png" />
                     </image>
                 </ImageView>
-                <TextField fx:id="forgotEmailField"
-                           promptText="Enter your email or phone"
-                           styleClass="input-field-flat"
-                           HBox.hgrow="ALWAYS"/>
+                <TextField fx:id="forgotEmailField" promptText="Enter your email or phone" styleClass="input-field-flat" HBox.hgrow="ALWAYS" />
             </HBox>
 
-            <Label text="New Password" styleClass="field-label"/>
-            <HBox styleClass="input-wrapper" alignment="CENTER_LEFT" spacing="8">
-                <ImageView fitWidth="18" fitHeight="18" preserveRatio="true">
+            <Label styleClass="field-label" text="New Password" />
+            <HBox alignment="CENTER_LEFT" spacing="8" styleClass="input-wrapper">
+                <ImageView fitHeight="18" fitWidth="18" preserveRatio="true">
                     <image>
-                        <Image url="@../images/lock_icon.png"/>
+                        <Image url="@../images/lock_icon.png" />
                     </image>
                 </ImageView>
-                <PasswordField fx:id="newPasswordField"
-                               promptText="Enter new password"
-                               styleClass="input-field-flat"
-                               HBox.hgrow="ALWAYS"/>
-                <TextField fx:id="visibleNewPasswordField"
-                           promptText="Enter new password"
-                           styleClass="input-field-flat"
-                           visible="false"
-                           managed="false"
-                           HBox.hgrow="ALWAYS"/>
-                <Button styleClass="show-hide-btn"
-                        onAction="#handleShowHideNewPassword">
+                <PasswordField fx:id="newPasswordField" promptText="Enter new password" styleClass="input-field-flat" HBox.hgrow="ALWAYS" />
+                <TextField fx:id="visibleNewPasswordField" managed="false" promptText="Enter new password" styleClass="input-field-flat" visible="false" HBox.hgrow="ALWAYS" />
+                <Button onAction="#handleShowHideNewPassword" styleClass="show-hide-btn">
                     <graphic>
-                        <ImageView fx:id="newPasswordEyeIcon" fitWidth="18" fitHeight="18" preserveRatio="true">
+                        <ImageView fx:id="newPasswordEyeIcon" fitHeight="18" fitWidth="18" preserveRatio="true">
                             <image>
-                                <Image url="@../images/eye_closed.png"/>
+                                <Image url="@../images/eye_closed.png" />
                             </image>
                         </ImageView>
                     </graphic>
                 </Button>
             </HBox>
 
-            <Label text="Confirm New Password" styleClass="field-label"/>
-            <HBox styleClass="input-wrapper" alignment="CENTER_LEFT" spacing="8">
-                <ImageView fitWidth="18" fitHeight="18" preserveRatio="true">
+            <Label styleClass="field-label" text="Confirm New Password" />
+            <HBox alignment="CENTER_LEFT" spacing="8" styleClass="input-wrapper">
+                <ImageView fitHeight="18" fitWidth="18" preserveRatio="true">
                     <image>
-                        <Image url="@../images/lock_icon.png"/>
+                        <Image url="@../images/lock_icon.png" />
                     </image>
                 </ImageView>
-                <PasswordField fx:id="confirmNewPasswordField"
-                               promptText="Confirm new password"
-                               styleClass="input-field-flat"
-                               HBox.hgrow="ALWAYS"/>
-                <TextField fx:id="visibleConfirmNewPasswordField"
-                           promptText="Confirm new password"
-                           styleClass="input-field-flat"
-                           visible="false"
-                           managed="false"
-                           HBox.hgrow="ALWAYS"/>
-                <Button styleClass="show-hide-btn"
-                        onAction="#handleShowHideConfirmNewPassword">
+                <PasswordField fx:id="confirmNewPasswordField" promptText="Confirm new password" styleClass="input-field-flat" HBox.hgrow="ALWAYS" />
+                <TextField fx:id="visibleConfirmNewPasswordField" managed="false" promptText="Confirm new password" styleClass="input-field-flat" visible="false" HBox.hgrow="ALWAYS" />
+                <Button onAction="#handleShowHideConfirmNewPassword" styleClass="show-hide-btn">
                     <graphic>
-                        <ImageView fx:id="confirmNewPasswordEyeIcon" fitWidth="18" fitHeight="18" preserveRatio="true">
+                        <ImageView fx:id="confirmNewPasswordEyeIcon" fitHeight="18" fitWidth="18" preserveRatio="true">
                             <image>
-                                <Image url="@../images/eye_closed.png"/>
+                                <Image url="@../images/eye_closed.png" />
                             </image>
                         </ImageView>
                     </graphic>
                 </Button>
             </HBox>
 
-            <Label fx:id="forgotErrorLabel" styleClass="error-label"/>
+            <Label fx:id="forgotErrorLabel" styleClass="error-label" />
 
-            <Button fx:id="resetPasswordButton"
-                    text="Reset Password"
-                    styleClass="login-btn"
-                    onAction="#handleResetPassword"
-                    maxWidth="Infinity"/>
+            <Button fx:id="resetPasswordButton" maxWidth="Infinity" onAction="#handleResetPassword" styleClass="login-btn" text="Reset Password" />
 
             <HBox alignment="CENTER">
-                <Hyperlink text="Back to Login"
-                           styleClass="signup-link"
-                           onAction="#handleBackToLogin"/>
+                <Hyperlink onAction="#handleBackToLogin" styleClass="signup-link" text="Back to Login" />
             </HBox>
 
         </VBox>
 
     </VBox>
 
-    <StackPane fx:id="rightPanel"
-               AnchorPane.rightAnchor="0"
-               AnchorPane.topAnchor="0"
-               AnchorPane.bottomAnchor="0"
-               AnchorPane.leftAnchor="380"
-               styleClass="right-panel">
+    <StackPane fx:id="rightPanel" styleClass="right-panel" AnchorPane.bottomAnchor="0" AnchorPane.leftAnchor="380" AnchorPane.rightAnchor="0" AnchorPane.topAnchor="0">
 
         <VBox alignment="TOP_CENTER" spacing="15">
             <padding>
-                <Insets top="40"/>
+                <Insets top="40" />
             </padding>
 
-            <Label fx:id="greetingLabel" styleClass="greeting-label"/>
+            <Label fx:id="greetingLabel" styleClass="greeting-label" />
 
         </VBox>
 
         <VBox alignment="BOTTOM_CENTER" spacing="10">
             <padding>
-                <Insets bottom="60"/>
+                <Insets bottom="60" />
             </padding>
-            <Label fx:id="smartFarmLabel" text="Smart Farm Management" styleClass="right-title"/>
-            <Label text="Manage your farm smarter" styleClass="right-subtitle"/>
+            <Label fx:id="smartFarmLabel" styleClass="right-title" text="Smart Farm Management" />
+            <Label styleClass="right-subtitle" text="Manage your farm smarter" />
         </VBox>
 
-        <ImageView fitWidth="340" fitHeight="340"
-                   preserveRatio="true"
-                   pickOnBounds="true"
-                   smooth="true">
+        <ImageView fitHeight="340" fitWidth="340" pickOnBounds="true" preserveRatio="true" smooth="true">
             <image>
-                <Image url="@../images/11.png"/>
+                <Image url="@../images/11.png" />
             </image>
         </ImageView>
 
     </StackPane>
 
-    <Button fx:id="themeToggleBtn"
-            styleClass="theme-btn"
-            AnchorPane.topAnchor="-40"
-            AnchorPane.leftAnchor="-40"
-            onAction="#handleThemeToggle">
+    <Button fx:id="themeToggleBtn" onAction="#handleThemeToggle" styleClass="theme-btn" AnchorPane.leftAnchor="-40" AnchorPane.topAnchor="-40">
         <graphic>
-            <ImageView fx:id="themeIcon" fitWidth="120" fitHeight="120">
+            <ImageView fx:id="themeIcon" fitHeight="120" fitWidth="120">
                 <image>
-                    <Image url="@../images/sun.png"/>
+                    <Image url="@../images/sun.png" />
                 </image>
             </ImageView>
         </graphic>

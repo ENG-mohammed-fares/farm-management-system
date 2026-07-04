@@ -3,8 +3,6 @@ package com.smartfarm.controller;
 import javafx.animation.*;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -16,6 +14,8 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.stage.Stage;
 import javafx.util.Duration;
+
+import com.smartfarm.util.SceneSwitcher;
 
 public class LoginController {
 
@@ -61,6 +61,14 @@ public class LoginController {
         setupEnterKey();
         setupAutoFocus();
         setupCapsLockWarning();
+        syncThemeState();
+    }
+
+    private void syncThemeState() {
+        isDarkMode = SceneSwitcher.isDarkMode();
+        if (isDarkMode) {
+            themeIcon.setImage(new Image(getClass().getResourceAsStream("/images/moon.png")));
+        }
     }
 
     private void setupEnterKey() {
@@ -250,30 +258,16 @@ public class LoginController {
 
         PauseTransition delay = new PauseTransition(Duration.millis(800));
         delay.setOnFinished(e -> {
-            try {
-                FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/dashboard.fxml"));
-                Scene scene = new Scene(loader.load());
-                Stage stage = (Stage) loginButton.getScene().getWindow();
-                stage.setScene(scene);
-            } catch (Exception ex) {
-                ex.printStackTrace();
-                setButtonLoading(loginButton, false);
-                errorLabel.setText("Something went wrong");
-            }
+            Stage stage = (Stage) loginButton.getScene().getWindow();
+            SceneSwitcher.switchTo(stage, "/fxml/dashboard.fxml");
         });
         delay.play();
     }
 
     @FXML
     private void handleSignUp() {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/signup.fxml"));
-            Scene scene = new Scene(loader.load());
-            Stage stage = (Stage) loginButton.getScene().getWindow();
-            stage.setScene(scene);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        Stage stage = (Stage) loginButton.getScene().getWindow();
+        SceneSwitcher.switchTo(stage, "/fxml/signup.fxml");
     }
 
     @FXML
@@ -418,6 +412,7 @@ public class LoginController {
         rotate.play();
 
         isDarkMode = !isDarkMode;
+        SceneSwitcher.setDarkMode(isDarkMode);
 
         if (isDarkMode) {
             themeIcon.setImage(new Image(getClass().getResourceAsStream("/images/moon.png")));

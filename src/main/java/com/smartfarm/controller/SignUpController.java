@@ -3,8 +3,6 @@ package com.smartfarm.controller;
 import javafx.animation.*;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -13,6 +11,8 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.util.Duration;
+
+import com.smartfarm.util.SceneSwitcher;
 
 public class SignUpController {
 
@@ -190,14 +190,8 @@ public class SignUpController {
 
     @FXML
     private void handleGoToLogin() {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/login.fxml"));
-            Scene scene = new Scene(loader.load());
-            Stage stage = (Stage) formPanel.getScene().getWindow();
-            stage.setScene(scene);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        Stage stage = (Stage) formPanel.getScene().getWindow();
+        SceneSwitcher.switchTo(stage, "/fxml/login.fxml");
     }
 
     private void shakeAnimation(javafx.scene.Node node) {

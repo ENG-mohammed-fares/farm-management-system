@@ -2,11 +2,11 @@ package com.smartfarm.controller;
 
 import javafx.animation.*;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.stage.Stage;
 import javafx.util.Duration;
+
+import com.smartfarm.util.SceneSwitcher;
 
 public class IntroController {
 
@@ -36,18 +36,10 @@ public class IntroController {
 
     private void scheduleTransitionToLogin() {
         PauseTransition pause = new PauseTransition(Duration.seconds(2));
-        pause.setOnFinished(e -> goToLogin());
-        pause.play();
-    }
-
-    private void goToLogin() {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/login.fxml"));
-            Scene scene = new Scene(loader.load());
+        pause.setOnFinished(e -> {
             Stage stage = (Stage) introTitle.getScene().getWindow();
-            stage.setScene(scene);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+            SceneSwitcher.switchTo(stage, "/fxml/login.fxml");
+        });
+        pause.play();
     }
 }

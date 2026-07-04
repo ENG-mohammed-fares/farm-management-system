@@ -42,7 +42,6 @@
                     <Button fx:id="btnHarvests" maxWidth="Infinity" onAction="#showHarvests" styleClass="nav-btn" text="🌾  Harvests" />
                     <Button fx:id="btnWorkers" maxWidth="Infinity" onAction="#showWorkers" styleClass="nav-btn" text="👷  Workers" />
                     <Button fx:id="btnTransactions" maxWidth="Infinity" onAction="#showTransactions" styleClass="nav-btn" text="💰  Transactions" />
-                    <Button fx:id="btnStorage" maxWidth="Infinity" onAction="#showStorage" styleClass="nav-btn" text="📦  Storage" />
                     <Button fx:id="btnFertilizers" maxWidth="Infinity" onAction="#showFertilizers" styleClass="nav-btn" text="👨🏼‍🌾  Fertilizers" />
                     <Button fx:id="btnReports" maxWidth="Infinity" onAction="#showReports" styleClass="nav-btn" text="📊  Reports" />
                     <Button fx:id="btnSettings" maxWidth="Infinity" onAction="#showSettings" styleClass="nav-btn" text="🔧  Settings" />

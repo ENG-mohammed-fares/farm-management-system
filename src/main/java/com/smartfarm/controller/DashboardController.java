@@ -9,8 +9,9 @@ import javafx.animation.RotateTransition;
 import javafx.animation.TranslateTransition;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
+
+import com.smartfarm.util.SceneSwitcher;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Scene;
@@ -51,7 +52,6 @@ public class DashboardController {
     @FXML private Button btnHarvests;
     @FXML private Button btnWorkers;
     @FXML private Button btnTransactions;
-    @FXML private Button btnStorage;
     @FXML private Button btnFertilizers;
     @FXML private Button btnHistory;
     @FXML private Button btnReports;
@@ -85,6 +85,14 @@ public class DashboardController {
         });
 
         showDashboard();
+        syncThemeState();
+    }
+
+    private void syncThemeState() {
+        isDarkMode = SceneSwitcher.isDarkMode();
+        if (isDarkMode) {
+            themeIcon.setImage(new Image(getClass().getResourceAsStream("/images/moon.png")));
+        }
     }
 
     private void setActive(Button button, String title) {
@@ -553,7 +561,148 @@ public class DashboardController {
 
     @FXML private void showFields() {
         setActive(btnFields, "Fields & Crops");
-        setContent(new Label("Fields & Crops content coming soon..."));
+        setContent(buildFields());
+    }
+
+    private Node buildFields() {
+        VBox root = new VBox(18);
+        root.getStyleClass().add("dash-root");
+
+        GridPane stats = row(33.33, 33.33, 33.33);
+        addCells(stats,
+                buildFieldStatCard("\uD83C\uDF3F", "6", "Total Fields"),
+                buildFieldStatCard("\uD83D\uDCCF", "32", "Total Dunums"),
+                buildFieldStatCard("\uD83C\uDF31", "9", "Active Crops"));
+
+        HBox toolbar = new HBox(12);
+        toolbar.setAlignment(Pos.CENTER_LEFT);
+
+        TextField searchField = new TextField();
+        searchField.setPromptText("\uD83D\uDD0D Search fields...");
+        searchField.getStyleClass().add("search-field");
+        searchField.setPrefWidth(250);
+
+        Region sp = new Region();
+        HBox.setHgrow(sp, Priority.ALWAYS);
+
+        Button addBtn = new Button("\u2795  Add Field");
+        addBtn.getStyleClass().add("action-btn");
+
+        toolbar.getChildren().addAll(searchField, sp, addBtn);
+
+        String[][] fields = {
+                {"Field A-1", "Olive Farm", "8", "Good", "\uD83D\uDFE2", "3 days ago",
+                        "Olives\u200E\u200E,\u200E\u200EWheat", "\uD83E\uDED2 Olives (450 trees)|\uD83C\uDF3E Wheat (3 dunums)"},
+                {"Field A-2", "Vegetable Garden", "5", "Excellent", "\uD83D\uDFE2", "Today",
+                        "Tomatoes\u200E\u200E,\u200E\u200ECucumbers", "\uD83C\uDF45 Tomatoes (2 dunums)|\uD83E\uDD52 Cucumbers (2 dunums)"},
+                {"Field B-1", "Grain Zone", "10", "Fair", "\uD83D\uDFE1", "1 week ago",
+                        "Wheat\u200E\u200E,\u200E\u200EBarley", "\uD83C\uDF3E Wheat (6 dunums)|\uD83C\uDF3E Barley (4 dunums)"},
+                {"Field C-1", "Fruit Orchard", "4", "Good", "\uD83D\uDFE2", "2 days ago",
+                        "Citrus\u200E\u200E,\u200E\u200EFigs", "\uD83C\uDF4A Citrus (150 trees)|\uD83C\uDF5E Figs (80 trees)"},
+                {"Field C-3", "New Plot", "5", "Not Tested", "\u26AA", "Never",
+                        "None", ""},
+        };
+
+        VBox fieldsList = new VBox(14);
+        populateFields(fieldsList, fields, "");
+
+        searchField.textProperty().addListener((obs, oldVal, newVal) -> {
+            populateFields(fieldsList, fields, newVal.trim().toLowerCase());
+        });
+
+        root.getChildren().addAll(stats, toolbar, fieldsList);
+        return root;
+    }
+
+    private void populateFields(VBox container, String[][] fields, String query) {
+        container.getChildren().clear();
+        for (String[] f : fields) {
+            if (!query.isEmpty()) {
+                String combined = (f[0] + " " + f[1] + " " + f[6]).toLowerCase();
+                if (!combined.contains(query)) continue;
+            }
+            container.getChildren().add(buildFieldCard(f[0], f[1], f[2], f[3], f[4], f[5], f[7]));
+        }
+        if (container.getChildren().isEmpty()) {
+            Label empty = new Label("No fields found");
+            empty.getStyleClass().add("card-sub");
+            empty.setStyle("-fx-padding: 30 0 30 0; -fx-font-size: 14px;");
+            container.getChildren().add(empty);
+        }
+    }
+
+    private VBox buildFieldStatCard(String icon, String value, String label) {
+        Label ic = new Label(icon);
+        ic.getStyleClass().add("stat-icon");
+        Label val = new Label(value);
+        val.getStyleClass().add("stat-value");
+        Label lbl = new Label(label);
+        lbl.getStyleClass().add("stat-label");
+
+        VBox card = styledCard(ic, val, lbl);
+        card.setSpacing(8);
+        card.setAlignment(Pos.CENTER);
+        card.setPrefHeight(110);
+        return card;
+    }
+
+    private VBox buildFieldCard(String name, String desc, String dunums, String soil,
+                                String soilDot, String lastIrrigation, String cropsData) {
+        Label nameLabel = new Label("\uD83C\uDF3F " + name);
+        nameLabel.getStyleClass().add("field-name");
+
+        Label descLabel = new Label(desc);
+        descLabel.getStyleClass().add("card-sub");
+
+        Region sp1 = new Region();
+        HBox.setHgrow(sp1, Priority.ALWAYS);
+
+        Label statusBadge = new Label(soilDot + " " + soil);
+        statusBadge.getStyleClass().add("soil-badge");
+
+        HBox header = new HBox(8, nameLabel, descLabel, sp1, statusBadge);
+        header.setAlignment(Pos.CENTER_LEFT);
+
+        HBox infoRow = new HBox(24,
+                fieldInfo("\uD83D\uDCCF", "Size", dunums + " dunums"),
+                fieldInfo("\uD83C\uDF0D", "Soil", soil),
+                fieldInfo("\uD83D\uDCA7", "Last Irrigation", lastIrrigation));
+        infoRow.setAlignment(Pos.CENTER_LEFT);
+
+        VBox card = styledCard(header, divider(), infoRow);
+        card.setSpacing(12);
+
+        if (cropsData != null && !cropsData.isEmpty()) {
+            Label cropsTitle = new Label("\uD83C\uDF31 Planted Crops");
+            cropsTitle.getStyleClass().add("crops-title");
+
+            HBox cropsRow = new HBox(10);
+            cropsRow.setAlignment(Pos.CENTER_LEFT);
+
+            String[] crops = cropsData.split("\\|");
+            for (String crop : crops) {
+                Label chip = new Label(crop.trim());
+                chip.getStyleClass().add("crop-chip");
+                cropsRow.getChildren().add(chip);
+            }
+
+            card.getChildren().addAll(divider(), cropsTitle, cropsRow);
+        }
+
+        return card;
+    }
+
+    private VBox fieldInfo(String icon, String label, String value) {
+        Label ic = new Label(icon);
+        ic.getStyleClass().add("field-info-icon");
+        Label lbl = new Label(label);
+        lbl.getStyleClass().add("mini-stat-label");
+        Label val = new Label(value);
+        val.getStyleClass().add("mini-stat-value");
+        val.setStyle("-fx-font-size: 13px;");
+        VBox box = new VBox(2, new HBox(4, ic, lbl), val);
+        box.setAlignment(Pos.CENTER_LEFT);
+        return box;
     }
 
     @FXML private void showHarvests() {
@@ -571,11 +720,6 @@ public class DashboardController {
         setContent(new Label("Transactions content coming soon..."));
     }
 
-    @FXML private void showStorage() {
-        setActive(btnStorage, "Storage");
-        setContent(new Label("Storage content coming soon..."));
-    }
-
     @FXML private void showFertilizers() {
         setActive(btnFertilizers, "Fertilizers");
         setContent(new Label("Fertilizers content coming soon..."));
@@ -583,7 +727,142 @@ public class DashboardController {
 
     @FXML private void showHistory() {
         setActive(btnHistory, "History");
-        setContent(new Label("History content coming soon..."));
+        setContent(buildHistory());
+    }
+
+    private String historyFilter = "ALL";
+
+    private Node buildHistory() {
+        VBox root = new VBox(16);
+        root.getStyleClass().add("dash-root");
+
+        HBox filterBar = new HBox(8);
+        filterBar.setAlignment(Pos.CENTER_LEFT);
+
+        String[] filters = {"All", "Harvest", "Transaction", "Worker", "Field"};
+        String[] filterKeys = {"ALL", "HARVEST", "TRANSACTION", "WORKER", "FIELD"};
+        String[] filterIcons = {"\uD83D\uDCCB", "\uD83C\uDF3E", "\uD83D\uDCB0", "\uD83D\uDC77", "\uD83C\uDF31"};
+
+        for (int i = 0; i < filters.length; i++) {
+            Button fb = new Button(filterIcons[i] + "  " + filters[i]);
+            String key = filterKeys[i];
+            fb.getStyleClass().add("filter-btn");
+            if (historyFilter.equals(key)) {
+                fb.getStyleClass().add("filter-active");
+            }
+            fb.setOnAction(e -> {
+                historyFilter = key;
+                showHistory();
+            });
+            filterBar.getChildren().add(fb);
+        }
+
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
+        Label countLabel = new Label();
+        countLabel.getStyleClass().add("card-sub");
+
+        filterBar.getChildren().addAll(spacer, countLabel);
+
+        VBox timeline = new VBox(0);
+        timeline.getStyleClass().add("timeline-container");
+
+        String[][] activities = {
+                {"HARVEST", "\uD83C\uDF45", "Harvested Tomatoes", "850 kg collected from Field A-2", "Today, 10:30 AM", "+850 kg", "up"},
+                {"TRANSACTION", "\uD83D\uDCB0", "Sale Completed", "Sold 500 kg tomatoes to Market", "Today, 09:15 AM", "+\u20AA 1,200", "up"},
+                {"WORKER", "\uD83D\uDC77", "Worker Assigned", "Ahmad joined Field B-1 as irrigator", "Yesterday, 04:00 PM", "", ""},
+                {"FIELD", "\uD83C\uDF31", "New Field Added", "Field C-3 registered (5 dunums)", "Yesterday, 02:30 PM", "+5 dunums", "up"},
+                {"HARVEST", "\uD83C\uDF3E", "Harvested Wheat", "3,200 kg collected from Field B-1", "2 days ago, 11:00 AM", "+3,200 kg", "up"},
+                {"TRANSACTION", "\uD83D\uDCB0", "Purchase Made", "Bought fertilizer for Field A-2", "2 days ago, 09:00 AM", "-\u20AA 320", "down"},
+                {"WORKER", "\uD83D\uDC77", "Worker Removed", "Khaled left Field A-1", "3 days ago, 05:00 PM", "", ""},
+                {"TRANSACTION", "\uD83D\uDCB0", "Payment Sent", "Worker salary payment", "3 days ago, 03:00 PM", "-\u20AA 450", "down"},
+                {"HARVEST", "\uD83E\uDED2", "Harvested Olives", "1,150 kg collected from Field D-1", "5 days ago, 08:00 AM", "+1,150 kg", "up"},
+                {"FIELD", "\uD83C\uDF31", "Field Updated", "Field A-1 soil status changed to Good", "5 days ago, 07:30 AM", "", ""},
+                {"TRANSACTION", "\uD83D\uDCB0", "Sale Completed", "Sold 1,000 kg wheat to distributor", "1 week ago, 10:00 AM", "+\u20AA 2,400", "up"},
+                {"HARVEST", "\uD83C\uDF3E", "Harvested Cucumbers", "620 kg collected from Field C-1", "1 week ago, 09:00 AM", "+620 kg", "up"},
+        };
+
+        int count = 0;
+        for (int i = 0; i < activities.length; i++) {
+            String[] a = activities[i];
+            if (!historyFilter.equals("ALL") && !a[0].equals(historyFilter)) continue;
+            count++;
+            boolean isLast = (i == activities.length - 1);
+            timeline.getChildren().add(buildTimelineItem(a[0], a[1], a[2], a[3], a[4], a[5], a[6], isLast));
+        }
+
+        countLabel.setText(count + " activities");
+
+        ScrollPane scroll = new ScrollPane(timeline);
+        scroll.setFitToWidth(true);
+        scroll.getStyleClass().addAll("content-scroll");
+        scroll.setStyle("-fx-background-color: transparent; -fx-background: transparent;");
+        VBox.setVgrow(scroll, Priority.ALWAYS);
+
+        root.getChildren().addAll(filterBar, scroll);
+        return root;
+    }
+
+    private HBox buildTimelineItem(String type, String icon, String title, String desc,
+                                   String time, String value, String direction, boolean isLast) {
+        VBox dotLine = new VBox();
+        dotLine.setAlignment(Pos.TOP_CENTER);
+        dotLine.setMinWidth(40);
+        dotLine.setMaxWidth(40);
+
+        Region dot = new Region();
+        dot.getStyleClass().addAll("timeline-dot", "timeline-dot-" + type.toLowerCase());
+        dot.setMinSize(14, 14);
+        dot.setMaxSize(14, 14);
+
+        if (!isLast) {
+            Region line = new Region();
+            line.getStyleClass().add("timeline-line");
+            line.setMinWidth(2);
+            line.setMaxWidth(2);
+            VBox.setVgrow(line, Priority.ALWAYS);
+            dotLine.getChildren().addAll(dot, line);
+        } else {
+            dotLine.getChildren().add(dot);
+        }
+
+        Label ic = new Label(icon);
+        ic.getStyleClass().addAll("row-icon", "row-icon-" + type.toLowerCase());
+
+        Label t = new Label(title);
+        t.getStyleClass().add("list-primary");
+
+        Label d = new Label(desc);
+        d.getStyleClass().add("list-sub");
+        d.setWrapText(true);
+
+        Label tm = new Label("\uD83D\uDD52 " + time);
+        tm.getStyleClass().add("timeline-time");
+
+        VBox textBox = new VBox(3, t, d, tm);
+        textBox.setAlignment(Pos.CENTER_LEFT);
+        HBox.setHgrow(textBox, Priority.ALWAYS);
+
+        HBox card = new HBox(12);
+        card.setAlignment(Pos.TOP_LEFT);
+        card.getStyleClass().add("timeline-card");
+        card.getChildren().addAll(ic, textBox);
+
+        if (value != null && !value.isEmpty()) {
+            Region sp = new Region();
+            HBox.setHgrow(sp, Priority.ALWAYS);
+            Label val = new Label(value);
+            val.getStyleClass().add("up".equals(direction) ? "pct-up" : "pct-down");
+            val.setStyle("-fx-font-size: 14px;");
+            card.getChildren().addAll(sp, val);
+        }
+
+        HBox row = new HBox(0, dotLine, card);
+        row.setAlignment(Pos.TOP_LEFT);
+        HBox.setHgrow(card, Priority.ALWAYS);
+        row.setPadding(new Insets(0, 0, 0, 0));
+        return row;
     }
 
     @FXML private void showReports() {
@@ -608,16 +887,8 @@ public class DashboardController {
         Optional<ButtonType> result = alert.showAndWait();
 
         if (result.isPresent() && result.get() == ButtonType.OK) {
-            try {
-                FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/login.fxml"));
-                Scene scene = new Scene(loader.load());
-
-                stage = (Stage) btnQuit.getScene().getWindow();
-                stage.setScene(scene);
-
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            stage = (Stage) btnQuit.getScene().getWindow();
+            SceneSwitcher.switchTo(stage, "/fxml/login.fxml");
         }
     }
 
@@ -628,6 +899,7 @@ public class DashboardController {
         rotate.play();
 
         isDarkMode = !isDarkMode;
+        SceneSwitcher.setDarkMode(isDarkMode);
 
         if (isDarkMode) {
             themeIcon.setImage(new Image(getClass().getResourceAsStream("/images/moon.png")));

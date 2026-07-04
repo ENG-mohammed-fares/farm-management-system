@@ -324,3 +324,155 @@
 .quick-btn:hover { -fx-background-color: #E8F5E9; }
 .dark-mode .quick-btn        { -fx-background-color: #1A3A1A; -fx-text-fill: #81C784; }
 .dark-mode .quick-btn:hover  { -fx-background-color: #245024; }
+
+.filter-btn {
+    -fx-background-color: #F0F0F0;
+    -fx-text-fill: #555555;
+    -fx-font-size: 12px; -fx-font-weight: bold;
+    -fx-background-radius: 20;
+    -fx-padding: 8 16 8 16;
+    -fx-cursor: hand;
+    -fx-border-color: transparent; -fx-border-radius: 20;
+}
+.filter-btn:hover { -fx-background-color: #E0E0E0; }
+.filter-active {
+    -fx-background-color: #2E7D32;
+    -fx-text-fill: #FFFFFF;
+}
+.filter-active:hover { -fx-background-color: #256d28; }
+.dark-mode .filter-btn { -fx-background-color: #383838; -fx-text-fill: #CCCCCC; }
+.dark-mode .filter-btn:hover { -fx-background-color: #444444; }
+.dark-mode .filter-active { -fx-background-color: #2E7D32; -fx-text-fill: #FFFFFF; }
+.dark-mode .filter-active:hover { -fx-background-color: #256d28; }
+
+.timeline-container {
+    -fx-padding: 8 0 8 0;
+}
+
+.timeline-dot {
+    -fx-background-radius: 50%;
+    -fx-border-radius: 50%;
+    -fx-border-width: 2;
+    -fx-border-color: #FFFFFF;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 4, 0, 0, 1);
+}
+.dark-mode .timeline-dot { -fx-border-color: #2D2D2D; }
+
+.timeline-dot-harvest     { -fx-background-color: #2E7D32; }
+.timeline-dot-transaction { -fx-background-color: #1565C0; }
+.timeline-dot-worker      { -fx-background-color: #E68A00; }
+.timeline-dot-field       { -fx-background-color: #7B1FA2; }
+
+.timeline-line {
+    -fx-background-color: #E0E0E0;
+}
+.dark-mode .timeline-line { -fx-background-color: #3A3A3A; }
+
+.timeline-card {
+    -fx-background-color: #FFFFFF;
+    -fx-background-radius: 12;
+    -fx-border-color: #ECECEC;
+    -fx-border-radius: 12;
+    -fx-border-width: 1;
+    -fx-padding: 14 18 14 18;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 6, 0, 0, 2);
+}
+.dark-mode .timeline-card {
+    -fx-background-color: #2D2D2D;
+    -fx-border-color: #3A3A3A;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.25), 6, 0, 0, 2);
+}
+
+.timeline-time {
+    -fx-font-size: 11px;
+    -fx-text-fill: #AAAAAA;
+}
+.dark-mode .timeline-time { -fx-text-fill: #777777; }
+
+.row-icon-harvest     { -fx-background-color: #E8F5E9; }
+.row-icon-transaction { -fx-background-color: #E3F2FD; }
+.row-icon-worker      { -fx-background-color: #FFF4E5; }
+.row-icon-field       { -fx-background-color: #F3E5F5; }
+.dark-mode .row-icon-harvest     { -fx-background-color: #1A3A1A; }
+.dark-mode .row-icon-transaction { -fx-background-color: #0D2137; }
+.dark-mode .row-icon-worker      { -fx-background-color: #3A3020; }
+.dark-mode .row-icon-field       { -fx-background-color: #2A1A2E; }
+
+.search-field {
+    -fx-background-color: #F5F5F5;
+    -fx-background-radius: 10;
+    -fx-border-color: #E0E0E0;
+    -fx-border-radius: 10;
+    -fx-padding: 10 14 10 14;
+    -fx-font-size: 13px;
+    -fx-prompt-text-fill: #AAAAAA;
+}
+.search-field:focused {
+    -fx-border-color: #2E7D32;
+    -fx-background-color: #FFFFFF;
+}
+.dark-mode .search-field {
+    -fx-background-color: #383838;
+    -fx-border-color: #444444;
+    -fx-text-fill: #EEEEEE;
+}
+.dark-mode .search-field:focused {
+    -fx-border-color: #81C784;
+    -fx-background-color: #2D2D2D;
+}
+
+.action-btn {
+    -fx-background-color: #2E7D32;
+    -fx-text-fill: #FFFFFF;
+    -fx-font-size: 13px; -fx-font-weight: bold;
+    -fx-background-radius: 10;
+    -fx-padding: 10 20 10 20;
+    -fx-cursor: hand;
+}
+.action-btn:hover { -fx-background-color: #256d28; }
+.dark-mode .action-btn { -fx-background-color: #2E7D32; }
+.dark-mode .action-btn:hover { -fx-background-color: #245024; }
+
+.field-name {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #2E7D32;
+}
+.dark-mode .field-name { -fx-text-fill: #81C784; }
+
+.soil-badge {
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #555555;
+    -fx-background-color: #F5F5F5;
+    -fx-background-radius: 15;
+    -fx-padding: 4 12 4 12;
+}
+.dark-mode .soil-badge {
+    -fx-text-fill: #CCCCCC;
+    -fx-background-color: #383838;
+}
+
+.field-info-icon {
+    -fx-font-size: 12px;
+}
+
+.crops-title {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #555555;
+}
+.dark-mode .crops-title { -fx-text-fill: #AAAAAA; }
+
+.crop-chip {
+    -fx-background-color: #E8F5E9;
+    -fx-text-fill: #2E7D32;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-padding: 6 14 6 14;
+    -fx-background-radius: 18;
+}
+.dark-mode .crop-chip {
+    -fx-background-color: #1A3A1A;
+    -fx-text-fill: #81C784;
+}
