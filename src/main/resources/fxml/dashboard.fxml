@@ -26,12 +26,15 @@
                 <padding>
                     <Insets bottom="30" left="10" right="15" />
                 </padding>
-                <Label styleClass="logo-icon" text="🌿" />
-                <Label styleClass="logo-text" text="Smart Farm" />
+                <ImageView fitWidth="65" fitHeight="65" preserveRatio="true" smooth="true">
+                    <image>
+                        <Image url="@../images/logo.png" />
+                    </image>
+                </ImageView>
+                <Label styleClass="logo-text" text="hased" />
             </HBox>
 
             <StackPane alignment="TOP_LEFT">
-
 
                 <Region fx:id="slideHighlight" styleClass="slide-highlight" mouseTransparent="true" />
 
