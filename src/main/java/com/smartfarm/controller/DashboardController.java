@@ -1185,9 +1185,9 @@ public class DashboardController {
         TextField nameField = settingsField("Mohammad Fares");
         TextField emailFieldS = settingsField("manager@smartfarm.ps");
         TextField phoneField = settingsField("+970 599 123 456");
-        TextField roleField = settingsField("Admin");
+        TextField roleField = settingsField("\uD83D\uDD12 Admin");
         roleField.setEditable(false);
-        roleField.setStyle("-fx-opacity: 0.7;");
+        roleField.setDisable(true);
 
         profileGrid.add(settingsLabel("Full Name"), 0, 0);
         profileGrid.add(nameField, 0, 1);
@@ -1231,7 +1231,7 @@ public class DashboardController {
         aboutTitle.getStyleClass().add("card-title");
         Label ver = new Label("Smart Farm Management System v1.0");
         ver.getStyleClass().add("list-primary");
-        Label dev = new Label("Developed by Mohammad Fares & Partner");
+        Label dev = new Label("Developed by Mohammad Fares & Yamen Aburob");
         dev.getStyleClass().add("card-sub");
         Label tech = new Label("JavaFX 21 \u2022 PostgreSQL \u2022 Maven");
         tech.getStyleClass().add("card-sub");
