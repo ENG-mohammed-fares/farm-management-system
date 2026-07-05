@@ -1,0 +1,18 @@
+.intro-bg {
+    -fx-background-image: url("../images/intro_background.jpg");
+    -fx-background-size: cover;
+    -fx-background-position: center;
+}
+
+.intro-title {
+    -fx-font-size: 32px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #1B5E20;
+    -fx-font-family: "Arial";
+}
+
+.intro-subtitle {
+    -fx-font-size: 14px;
+    -fx-text-fill: #4CAF50;
+    -fx-font-family: "Arial";
+}

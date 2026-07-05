@@ -5,6 +5,7 @@ import java.util.Optional;
 import javafx.animation.FadeTransition;
 import javafx.animation.Interpolator;
 import javafx.animation.ParallelTransition;
+import javafx.animation.PauseTransition;
 import javafx.animation.RotateTransition;
 import javafx.animation.TranslateTransition;
 import javafx.application.Platform;
@@ -707,22 +708,553 @@ public class DashboardController {
 
     @FXML private void showHarvests() {
         setActive(btnHarvests, "Harvests");
-        setContent(new Label("Harvests content coming soon..."));
+        setContent(buildHarvests());
+    }
+
+    private Node buildHarvests() {
+        VBox root = new VBox(18);
+        root.getStyleClass().add("dash-root");
+
+        GridPane stats = row(33.33, 33.33, 33.33);
+        addCells(stats,
+                buildFieldStatCard("\uD83C\uDF3E", "34", "Total Harvests"),
+                buildFieldStatCard("\u2696\uFE0F", "18,420", "Total kg"),
+                buildFieldStatCard("\uD83C\uDFC6", "Tomatoes", "Best Crop"));
+
+        HBox toolbar = new HBox(12);
+        toolbar.setAlignment(Pos.CENTER_LEFT);
+        TextField searchField = new TextField();
+        searchField.setPromptText("\uD83D\uDD0D Search harvests...");
+        searchField.getStyleClass().add("search-field");
+        searchField.setPrefWidth(250);
+        toolbar.getChildren().add(searchField);
+
+        String[][] data = {
+                {"\uD83C\uDF45", "Tomatoes", "Field A-2", "850", "0", "Today"},
+                {"\uD83C\uDF3E", "Wheat", "Field B-1", "3,200", "120", "2 days ago"},
+                {"\uD83E\uDED2", "Olives", "Field A-1", "1,150", "45", "5 days ago"},
+                {"\uD83E\uDD52", "Cucumbers", "Field A-2", "620", "30", "1 week ago"},
+                {"\uD83C\uDF4A", "Citrus", "Field C-1", "2,800", "90", "1 week ago"},
+                {"\uD83C\uDF3E", "Barley", "Field B-1", "4,100", "200", "2 weeks ago"},
+                {"\uD83C\uDF45", "Tomatoes", "Field A-2", "780", "25", "2 weeks ago"},
+                {"\uD83E\uDED2", "Olives", "Field A-1", "2,900", "60", "3 weeks ago"},
+        };
+
+        VBox list = new VBox(12);
+        populateHarvests(list, data, "");
+
+        searchField.textProperty().addListener((obs, o, n) -> populateHarvests(list, data, n.trim().toLowerCase()));
+
+        root.getChildren().addAll(stats, toolbar, list);
+        return root;
+    }
+
+    private void populateHarvests(VBox container, String[][] data, String query) {
+        container.getChildren().clear();
+        for (String[] d : data) {
+            if (!query.isEmpty() && !(d[1] + " " + d[2]).toLowerCase().contains(query)) continue;
+            Label ic = new Label(d[0]);
+            ic.getStyleClass().add("row-icon");
+            Label crop = new Label(d[1]);
+            crop.getStyleClass().add("list-primary");
+            Label field = new Label(d[2] + " \u2022 " + d[5]);
+            field.getStyleClass().add("list-sub");
+            VBox txt = new VBox(2, crop, field);
+            Region sp = new Region();
+            HBox.setHgrow(sp, Priority.ALWAYS);
+            Label good = new Label("\u2705 " + d[3] + " kg");
+            good.getStyleClass().add("pct-up");
+            good.setStyle("-fx-font-size: 13px;");
+            Label damaged = new Label("\u274C " + d[4] + " kg");
+            damaged.getStyleClass().add("pct-down");
+            damaged.setStyle("-fx-font-size: 12px;");
+            VBox nums = new VBox(2, good, damaged);
+            nums.setAlignment(Pos.CENTER_RIGHT);
+            HBox row = new HBox(12, ic, txt, sp, nums);
+            row.setAlignment(Pos.CENTER_LEFT);
+            row.getStyleClass().add("timeline-card");
+            container.getChildren().add(row);
+        }
+        if (container.getChildren().isEmpty()) {
+            Label empty = new Label("No harvests found");
+            empty.getStyleClass().add("card-sub");
+            empty.setStyle("-fx-padding: 30 0 30 0; -fx-font-size: 14px;");
+            container.getChildren().add(empty);
+        }
     }
 
     @FXML private void showWorkers() {
         setActive(btnWorkers, "Workers");
-        setContent(new Label("Workers content coming soon..."));
+        setContent(buildWorkers());
+    }
+
+    private Node buildWorkers() {
+        VBox root = new VBox(18);
+        root.getStyleClass().add("dash-root");
+
+        GridPane stats = row(33.33, 33.33, 33.33);
+        addCells(stats,
+                buildFieldStatCard("\uD83D\uDC77", "18", "Total Workers"),
+                buildFieldStatCard("\u2705", "15", "Active"),
+                buildFieldStatCard("\uD83C\uDF3F", "5", "Fields Covered"));
+
+        HBox toolbar = new HBox(12);
+        toolbar.setAlignment(Pos.CENTER_LEFT);
+        TextField searchField = new TextField();
+        searchField.setPromptText("\uD83D\uDD0D Search workers...");
+        searchField.getStyleClass().add("search-field");
+        searchField.setPrefWidth(250);
+        toolbar.getChildren().add(searchField);
+
+        String[][] data = {
+                {"AH", "Ahmad Hassan", "Irrigator", "Field A-1", "\u20AA 15/liter", "Active"},
+                {"MK", "Mohammad Khaled", "Harvester", "Field A-2", "\u20AA 8/kg", "Active"},
+                {"SK", "Sami Khalil", "Plower", "Field B-1", "\u20AA 50/dunum", "Active"},
+                {"OA", "Omar Ali", "Irrigator", "Field C-1", "\u20AA 15/liter", "Active"},
+                {"YS", "Yousef Saleh", "Harvester", "Field A-1", "\u20AA 10/kg", "Active"},
+                {"KN", "Khaled Nasser", "Harvester", "Field B-1", "\u20AA 8/kg", "Inactive"},
+                {"RA", "Rami Ahmad", "Plower", "Field C-1", "\u20AA 55/dunum", "Inactive"},
+                {"TM", "Tariq Mahmoud", "Irrigator", "Field A-2", "\u20AA 12/liter", "Active"},
+        };
+
+        VBox list = new VBox(12);
+        populateWorkers(list, data, "");
+
+        searchField.textProperty().addListener((obs, o, n) -> populateWorkers(list, data, n.trim().toLowerCase()));
+
+        root.getChildren().addAll(stats, toolbar, list);
+        return root;
+    }
+
+    private void populateWorkers(VBox container, String[][] data, String query) {
+        container.getChildren().clear();
+        for (String[] d : data) {
+            if (!query.isEmpty() && !(d[1] + " " + d[2] + " " + d[3]).toLowerCase().contains(query)) continue;
+            Label avatar = new Label(d[0]);
+            avatar.getStyleClass().add("avatar");
+            avatar.setStyle("-fx-font-size: 14px; -fx-min-width: 40; -fx-min-height: 40; -fx-max-width: 40; -fx-max-height: 40;");
+            Label name = new Label(d[1]);
+            name.getStyleClass().add("list-primary");
+            Label role = new Label(d[2] + " \u2022 " + d[3]);
+            role.getStyleClass().add("list-sub");
+            VBox txt = new VBox(2, name, role);
+            Region sp = new Region();
+            HBox.setHgrow(sp, Priority.ALWAYS);
+            Label wage = new Label("\uD83D\uDCB0 " + d[4]);
+            wage.getStyleClass().add("mini-stat-value");
+            wage.setStyle("-fx-font-size: 13px;");
+            Label wageLabel = new Label("Wage per unit");
+            wageLabel.getStyleClass().add("list-sub");
+            Label status = new Label(d[5]);
+            status.getStyleClass().add("Active".equals(d[5]) ? "pill-up" : "pill-down");
+            VBox right = new VBox(3, wage, wageLabel, status);
+            right.setAlignment(Pos.CENTER_RIGHT);
+            HBox row = new HBox(12, avatar, txt, sp, right);
+            row.setAlignment(Pos.CENTER_LEFT);
+            row.getStyleClass().add("timeline-card");
+            container.getChildren().add(row);
+        }
+        if (container.getChildren().isEmpty()) {
+            Label empty = new Label("No workers found");
+            empty.getStyleClass().add("card-sub");
+            empty.setStyle("-fx-padding: 30 0 30 0; -fx-font-size: 14px;");
+            container.getChildren().add(empty);
+        }
     }
 
     @FXML private void showTransactions() {
         setActive(btnTransactions, "Transactions");
-        setContent(new Label("Transactions content coming soon..."));
+        setContent(buildTransactions());
+    }
+
+    private String txFilter = "ALL";
+
+    private Node buildTransactions() {
+        VBox root = new VBox(18);
+        root.getStyleClass().add("dash-root");
+
+        GridPane stats = row(33.33, 33.33, 33.33);
+        addCells(stats,
+                buildFieldStatCard("\uD83D\uDCB0", "\u20AA 42,300", "Total Revenue"),
+                buildFieldStatCard("\uD83D\uDED2", "\u20AA 19,900", "Total Expenses"),
+                buildFieldStatCard("\uD83D\uDCCA", "\u20AA 22,400", "Net Profit"));
+
+        HBox filterBar = new HBox(8);
+        filterBar.setAlignment(Pos.CENTER_LEFT);
+        String[] fNames = {"All", "Sale", "Purchase", "Payment"};
+        String[] fKeys = {"ALL", "SALE", "PURCHASE", "PAYMENT"};
+        String[] fIcons = {"\uD83D\uDCCB", "\uD83D\uDCB5", "\uD83D\uDED2", "\uD83D\uDCB3"};
+        for (int i = 0; i < fNames.length; i++) {
+            Button fb = new Button(fIcons[i] + "  " + fNames[i]);
+            String key = fKeys[i];
+            fb.getStyleClass().add("filter-btn");
+            if (txFilter.equals(key)) fb.getStyleClass().add("filter-active");
+            fb.setOnAction(e -> { txFilter = key; showTransactions(); });
+            filterBar.getChildren().add(fb);
+        }
+
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+        TextField searchField = new TextField();
+        searchField.setPromptText("\uD83D\uDD0D Search...");
+        searchField.getStyleClass().add("search-field");
+        searchField.setPrefWidth(200);
+        filterBar.getChildren().addAll(spacer, searchField);
+
+        String[][] data = {
+                {"SALE", "\uD83D\uDCB5", "Sold Tomatoes", "500 kg to Central Market", "+\u20AA 1,200", "Today", "+5%", "up"},
+                {"PURCHASE", "\uD83D\uDED2", "Bought Fertilizer", "NPK Mix for Field A-2", "-\u20AA 320", "Yesterday", "-2%", "down"},
+                {"PAYMENT", "\uD83D\uDCB3", "Worker Salary", "Ahmad Hassan - Irrigation", "-\u20AA 450", "2 days ago", "", ""},
+                {"SALE", "\uD83D\uDCB5", "Sold Wheat", "1,000 kg to distributor", "+\u20AA 2,400", "3 days ago", "+12%", "up"},
+                {"PURCHASE", "\uD83D\uDED2", "Bought Seeds", "Wheat seeds for Field B-1", "-\u20AA 180", "4 days ago", "-1%", "down"},
+                {"PAYMENT", "\uD83D\uDCB3", "Worker Salary", "Mohammad Khaled - Harvest", "-\u20AA 640", "5 days ago", "", ""},
+                {"SALE", "\uD83D\uDCB5", "Sold Olives", "800 kg to olive press", "+\u20AA 3,200", "1 week ago", "+8%", "up"},
+                {"PURCHASE", "\uD83D\uDED2", "Equipment Repair", "Irrigation pump maintenance", "-\u20AA 550", "1 week ago", "-3%", "down"},
+                {"SALE", "\uD83D\uDCB5", "Sold Citrus", "1,200 kg to market", "+\u20AA 4,800", "2 weeks ago", "+15%", "up"},
+                {"PAYMENT", "\uD83D\uDCB3", "Worker Salary", "Sami Khalil - Plowing", "-\u20AA 500", "2 weeks ago", "", ""},
+        };
+
+        VBox list = new VBox(12);
+        populateTransactions(list, data, txFilter, "");
+
+        searchField.textProperty().addListener((obs, o, n) ->
+                populateTransactions(list, data, txFilter, n.trim().toLowerCase()));
+
+        root.getChildren().addAll(stats, filterBar, list);
+        return root;
+    }
+
+    private void populateTransactions(VBox container, String[][] data, String filter, String query) {
+        container.getChildren().clear();
+        for (String[] d : data) {
+            if (!"ALL".equals(filter) && !d[0].equals(filter)) continue;
+            if (!query.isEmpty() && !(d[2] + " " + d[3]).toLowerCase().contains(query)) continue;
+            Label badge = new Label(d[0]);
+            badge.getStyleClass().addAll("badge", badgeClass(d[0]));
+            Label title = new Label(d[2]);
+            title.getStyleClass().add("list-primary");
+            Label desc = new Label(d[3] + " \u2022 " + d[5]);
+            desc.getStyleClass().add("list-sub");
+            VBox txt = new VBox(2, title, desc);
+            Region sp = new Region();
+            HBox.setHgrow(sp, Priority.ALWAYS);
+            Label amount = new Label(d[4]);
+            amount.getStyleClass().add(d[4].startsWith("+") ? "pct-up" : "pct-down");
+            amount.setStyle("-fx-font-size: 15px; -fx-font-weight: bold;");
+            VBox right = new VBox(4, amount);
+            right.setAlignment(Pos.CENTER_RIGHT);
+            if (d[6] != null && !d[6].isEmpty()) {
+                Label pct = pill(d[6], "up".equals(d[7]));
+                right.getChildren().add(pct);
+            }
+            HBox row = new HBox(12, badge, txt, sp, right);
+            row.setAlignment(Pos.CENTER_LEFT);
+            row.getStyleClass().add("timeline-card");
+            container.getChildren().add(row);
+        }
+        if (container.getChildren().isEmpty()) {
+            Label empty = new Label("No transactions found");
+            empty.getStyleClass().add("card-sub");
+            empty.setStyle("-fx-padding: 30 0 30 0; -fx-font-size: 14px;");
+            container.getChildren().add(empty);
+        }
     }
 
     @FXML private void showFertilizers() {
         setActive(btnFertilizers, "Fertilizers");
-        setContent(new Label("Fertilizers content coming soon..."));
+        setContent(buildFertilizers());
+    }
+
+    private Node buildFertilizers() {
+        VBox root = new VBox(18);
+        root.getStyleClass().add("dash-root");
+
+        GridPane stats = row(33.33, 33.33, 33.33);
+        addCells(stats,
+                buildFieldStatCard("\uD83E\uDDEA", "12", "Total Items"),
+                buildFieldStatCard("\u2705", "9", "In Stock"),
+                buildFieldStatCard("\u26A0\uFE0F", "3", "Low Stock"));
+
+        HBox toolbar = new HBox(12);
+        toolbar.setAlignment(Pos.CENTER_LEFT);
+        TextField searchField = new TextField();
+        searchField.setPromptText("\uD83D\uDD0D Search fertilizers...");
+        searchField.getStyleClass().add("search-field");
+        searchField.setPrefWidth(250);
+        toolbar.getChildren().add(searchField);
+
+        String[][] data = {
+                {"\uD83E\uDDEA", "NPK Fertilizer", "Fertilizer", "150 kg", "Field A-2", "Good", "3 days ago"},
+                {"\uD83E\uDDEA", "Urea", "Fertilizer", "80 kg", "Field B-1", "Good", "1 week ago"},
+                {"\uD83D\uDC8A", "Fungicide", "Medicine", "12 liters", "Field A-1", "Low", "2 weeks ago"},
+                {"\uD83E\uDDEA", "Potassium Sulfate", "Fertilizer", "200 kg", "Field C-1", "Good", "5 days ago"},
+                {"\uD83D\uDC8A", "Insecticide", "Medicine", "5 liters", "Field A-2", "Low", "3 weeks ago"},
+                {"\uD83E\uDDEA", "Compost", "Fertilizer", "500 kg", "All Fields", "Good", "1 week ago"},
+                {"\uD83D\uDC8A", "Herbicide", "Medicine", "8 liters", "Field B-1", "Low", "1 month ago"},
+                {"\uD83E\uDDEA", "Phosphate", "Fertilizer", "120 kg", "Field C-1", "Good", "2 days ago"},
+        };
+
+        VBox list = new VBox(12);
+        populateFertilizers(list, data, "");
+
+        searchField.textProperty().addListener((obs, o, n) -> populateFertilizers(list, data, n.trim().toLowerCase()));
+
+        root.getChildren().addAll(stats, toolbar, list);
+        return root;
+    }
+
+    private void populateFertilizers(VBox container, String[][] data, String query) {
+        container.getChildren().clear();
+        for (String[] d : data) {
+            if (!query.isEmpty() && !(d[1] + " " + d[2] + " " + d[4]).toLowerCase().contains(query)) continue;
+            Label ic = new Label(d[0]);
+            ic.getStyleClass().add("row-icon");
+            Label name = new Label(d[1]);
+            name.getStyleClass().add("list-primary");
+            Label info = new Label(d[2] + " \u2022 " + d[4] + " \u2022 " + d[6]);
+            info.getStyleClass().add("list-sub");
+            VBox txt = new VBox(2, name, info);
+            Region sp = new Region();
+            HBox.setHgrow(sp, Priority.ALWAYS);
+            Label qty = new Label(d[3]);
+            qty.getStyleClass().add("mini-stat-value");
+            qty.setStyle("-fx-font-size: 13px;");
+            Label stock = new Label(d[5]);
+            stock.getStyleClass().add("Good".equals(d[5]) ? "pill-up" : "pill-down");
+            VBox right = new VBox(4, qty, stock);
+            right.setAlignment(Pos.CENTER_RIGHT);
+            HBox row = new HBox(12, ic, txt, sp, right);
+            row.setAlignment(Pos.CENTER_LEFT);
+            row.getStyleClass().add("timeline-card");
+            container.getChildren().add(row);
+        }
+        if (container.getChildren().isEmpty()) {
+            Label empty = new Label("No items found");
+            empty.getStyleClass().add("card-sub");
+            empty.setStyle("-fx-padding: 30 0 30 0; -fx-font-size: 14px;");
+            container.getChildren().add(empty);
+        }
+    }
+
+    @FXML private void showReports() {
+        setActive(btnReports, "Reports");
+        setContent(buildReports());
+    }
+
+    private Node buildReports() {
+        VBox root = new VBox(18);
+        root.getStyleClass().add("dash-root");
+
+        Label subtitle = new Label("Farm Performance Overview");
+        subtitle.getStyleClass().add("card-title");
+
+        GridPane topRow = row(25, 25, 25, 25);
+        addCells(topRow,
+                buildFieldStatCard("\uD83C\uDF3F", "6", "Fields"),
+                buildFieldStatCard("\uD83D\uDC77", "18", "Workers"),
+                buildFieldStatCard("\uD83C\uDF3E", "34", "Harvests"),
+                buildFieldStatCard("\uD83D\uDCB0", "23", "Transactions"));
+
+        GridPane midRow = row(50, 50);
+        addCells(midRow, buildReportRingCard("Harvest Quality", 92, "ring-progress", "92%", "Quality"),
+                buildReportRingCard("Budget Usage", 67, "ring-purchases", "67%", "Used"));
+
+        VBox cropTable = styledCard();
+        cropTable.setSpacing(12);
+        Label tableTitle = new Label("\uD83C\uDFC6 Top Crops by Yield");
+        tableTitle.getStyleClass().add("card-title");
+        cropTable.getChildren().add(tableTitle);
+
+        String[][] crops = {
+                {"1", "\uD83C\uDF3E Barley", "4,100 kg", "22%"},
+                {"2", "\uD83C\uDF3E Wheat", "3,200 kg", "17%"},
+                {"3", "\uD83E\uDED2 Olives", "4,050 kg", "22%"},
+                {"4", "\uD83C\uDF4A Citrus", "2,800 kg", "15%"},
+                {"5", "\uD83C\uDF45 Tomatoes", "1,630 kg", "9%"},
+        };
+
+        for (String[] c : crops) {
+            Label rank = new Label(c[0]);
+            rank.getStyleClass().add("stat-icon");
+            rank.setStyle("-fx-font-size: 14px; -fx-min-width: 32; -fx-min-height: 32; -fx-max-width: 32; -fx-max-height: 32;");
+            Label cname = new Label(c[1]);
+            cname.getStyleClass().add("list-primary");
+            Region csp = new Region();
+            HBox.setHgrow(csp, Priority.ALWAYS);
+            Label cyield = new Label(c[2]);
+            cyield.getStyleClass().add("mini-stat-value");
+            cyield.setStyle("-fx-font-size: 13px;");
+            Label cpct = pill(c[3], true);
+            HBox crow = new HBox(12, rank, cname, csp, cyield, cpct);
+            crow.setAlignment(Pos.CENTER_LEFT);
+            cropTable.getChildren().add(crow);
+        }
+
+        GridPane finRow = row(50, 50);
+        VBox revenueCard = styledCard();
+        revenueCard.setSpacing(10);
+        Label revTitle = new Label("\uD83D\uDCB5 Revenue Breakdown");
+        revTitle.getStyleClass().add("card-title");
+        revenueCard.getChildren().add(revTitle);
+
+        String[][] rev = {
+                {"Tomatoes", "\u20AA 1,200", "up"},
+                {"Wheat", "\u20AA 2,400", "up"},
+                {"Olives", "\u20AA 3,200", "up"},
+                {"Citrus", "\u20AA 4,800", "up"},
+        };
+        for (String[] r : rev) {
+            Label rname = new Label(r[0]);
+            rname.getStyleClass().add("list-primary");
+            Region rsp = new Region();
+            HBox.setHgrow(rsp, Priority.ALWAYS);
+            Label ramt = new Label(r[1]);
+            ramt.getStyleClass().add("pct-up");
+            ramt.setStyle("-fx-font-size: 13px;");
+            HBox rrow = new HBox(8, rname, rsp, ramt);
+            rrow.setAlignment(Pos.CENTER_LEFT);
+            revenueCard.getChildren().add(rrow);
+        }
+
+        VBox expenseCard = styledCard();
+        expenseCard.setSpacing(10);
+        Label expTitle = new Label("\uD83D\uDED2 Expense Breakdown");
+        expTitle.getStyleClass().add("card-title");
+        expenseCard.getChildren().add(expTitle);
+
+        String[][] exp = {
+                {"Fertilizers", "\u20AA 520", "down"},
+                {"Seeds", "\u20AA 180", "down"},
+                {"Equipment", "\u20AA 550", "down"},
+                {"Salaries", "\u20AA 1,590", "down"},
+        };
+        for (String[] x : exp) {
+            Label xname = new Label(x[0]);
+            xname.getStyleClass().add("list-primary");
+            Region xsp = new Region();
+            HBox.setHgrow(xsp, Priority.ALWAYS);
+            Label xamt = new Label(x[1]);
+            xamt.getStyleClass().add("pct-down");
+            xamt.setStyle("-fx-font-size: 13px;");
+            HBox xrow = new HBox(8, xname, xsp, xamt);
+            xrow.setAlignment(Pos.CENTER_LEFT);
+            expenseCard.getChildren().add(xrow);
+        }
+
+        addCells(finRow, revenueCard, expenseCard);
+
+        root.getChildren().addAll(subtitle, topRow, midRow, cropTable, finRow);
+        return root;
+    }
+
+    private VBox buildReportRingCard(String title, double percent, String ringClass, String centerText, String subText) {
+        Label t = new Label(title);
+        t.getStyleClass().add("card-title");
+        StackPane ring = buildRing(110, 14, percent, ringClass, centerText, subText);
+        VBox card = styledCard(t, ring);
+        card.setSpacing(14);
+        card.setAlignment(Pos.CENTER);
+        card.setPrefHeight(200);
+        return card;
+    }
+
+    @FXML private void showSettings() {
+        setActive(btnSettings, "Settings");
+        setContent(buildSettings());
+    }
+
+    private Node buildSettings() {
+        VBox root = new VBox(18);
+        root.getStyleClass().add("dash-root");
+
+        VBox profileCard = styledCard();
+        profileCard.setSpacing(14);
+        Label profileTitle = new Label("\uD83D\uDC64 Profile Information");
+        profileTitle.getStyleClass().add("card-title");
+
+        GridPane profileGrid = new GridPane();
+        profileGrid.setHgap(14);
+        profileGrid.setVgap(12);
+        for (int i = 0; i < 2; i++) {
+            ColumnConstraints cc = new ColumnConstraints();
+            cc.setPercentWidth(50);
+            cc.setHgrow(Priority.ALWAYS);
+            profileGrid.getColumnConstraints().add(cc);
+        }
+
+        TextField nameField = settingsField("Mohammad Fares");
+        TextField emailFieldS = settingsField("manager@smartfarm.ps");
+        TextField phoneField = settingsField("+970 599 123 456");
+        TextField roleField = settingsField("Admin");
+        roleField.setEditable(false);
+        roleField.setStyle("-fx-opacity: 0.7;");
+
+        profileGrid.add(settingsLabel("Full Name"), 0, 0);
+        profileGrid.add(nameField, 0, 1);
+        profileGrid.add(settingsLabel("Email"), 1, 0);
+        profileGrid.add(emailFieldS, 1, 1);
+        profileGrid.add(settingsLabel("Phone"), 0, 2);
+        profileGrid.add(phoneField, 0, 3);
+        profileGrid.add(settingsLabel("Role"), 1, 2);
+        profileGrid.add(roleField, 1, 3);
+
+        Button saveBtn = new Button("\uD83D\uDCBE  Save Changes");
+        saveBtn.getStyleClass().add("action-btn");
+        saveBtn.setOnAction(e -> {
+            saveBtn.setText("\u2714  Saved!");
+            saveBtn.setStyle("-fx-background-color: #1B5E20;");
+            PauseTransition p = new PauseTransition(Duration.millis(1500));
+            p.setOnFinished(ev -> {
+                saveBtn.setText("\uD83D\uDCBE  Save Changes");
+                saveBtn.setStyle("");
+            });
+            p.play();
+        });
+
+        profileCard.getChildren().addAll(profileTitle, profileGrid, saveBtn);
+
+        VBox themeCard = styledCard();
+        themeCard.setSpacing(14);
+        Label themeTitle = new Label("\uD83C\uDFA8 Appearance");
+        themeTitle.getStyleClass().add("card-title");
+        Label themeDesc = new Label("Toggle between light and dark theme");
+        themeDesc.getStyleClass().add("card-sub");
+        Button themeBtn = new Button(isDarkMode ? "\u2600\uFE0F  Switch to Light Mode" : "\uD83C\uDF19  Switch to Dark Mode");
+        themeBtn.getStyleClass().add("quick-btn");
+        themeBtn.setMaxWidth(300);
+        themeBtn.setOnAction(e -> handleThemeToggle());
+        themeCard.getChildren().addAll(themeTitle, themeDesc, themeBtn);
+
+        VBox aboutCard = styledCard();
+        aboutCard.setSpacing(10);
+        Label aboutTitle = new Label("\u2139\uFE0F About");
+        aboutTitle.getStyleClass().add("card-title");
+        Label ver = new Label("Smart Farm Management System v1.0");
+        ver.getStyleClass().add("list-primary");
+        Label dev = new Label("Developed by Mohammad Fares & Partner");
+        dev.getStyleClass().add("card-sub");
+        Label tech = new Label("JavaFX 21 \u2022 PostgreSQL \u2022 Maven");
+        tech.getStyleClass().add("card-sub");
+        Label uni = new Label("University Project \u2022 Computer Engineering");
+        uni.getStyleClass().add("card-sub");
+        aboutCard.getChildren().addAll(aboutTitle, ver, dev, tech, uni);
+
+        root.getChildren().addAll(profileCard, themeCard, aboutCard);
+        return root;
+    }
+
+    private TextField settingsField(String text) {
+        TextField f = new TextField(text);
+        f.getStyleClass().add("search-field");
+        f.setMaxWidth(Double.MAX_VALUE);
+        return f;
+    }
+
+    private Label settingsLabel(String text) {
+        Label l = new Label(text);
+        l.getStyleClass().add("mini-stat-label");
+        l.setStyle("-fx-font-size: 12px; -fx-font-weight: bold;");
+        return l;
     }
 
     @FXML private void showHistory() {
@@ -863,16 +1395,6 @@ public class DashboardController {
         HBox.setHgrow(card, Priority.ALWAYS);
         row.setPadding(new Insets(0, 0, 0, 0));
         return row;
-    }
-
-    @FXML private void showReports() {
-        setActive(btnReports, "Reports");
-        setContent(new Label("Reports content coming soon..."));
-    }
-
-    @FXML private void showSettings() {
-        setActive(btnSettings, "Settings");
-        setContent(new Label("Settings content coming soon..."));
     }
 
     @FXML

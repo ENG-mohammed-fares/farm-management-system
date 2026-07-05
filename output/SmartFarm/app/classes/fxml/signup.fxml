@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.geometry.*?>
+
+<AnchorPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.smartfarm.controller.SignUpController"
+            prefWidth="900" prefHeight="600"
+            stylesheets="@../css/signup.css">
+
+    <Pane fx:id="bgPane"
+          AnchorPane.topAnchor="0"
+          AnchorPane.bottomAnchor="0"
+          AnchorPane.leftAnchor="0"
+          AnchorPane.rightAnchor="0"
+          styleClass="bg-pane"/>
+
+    <Pane AnchorPane.topAnchor="0"
+          AnchorPane.bottomAnchor="0"
+          AnchorPane.leftAnchor="0"
+          AnchorPane.rightAnchor="0"
+          style="-fx-background-color: rgba(0,0,0,0.3);"/>
+
+    <StackPane AnchorPane.topAnchor="0"
+               AnchorPane.bottomAnchor="0"
+               AnchorPane.leftAnchor="0"
+               AnchorPane.rightAnchor="0">
+
+        <VBox fx:id="formPanel"
+              styleClass="form-panel"
+              spacing="12"
+              alignment="CENTER"
+              maxWidth="400"
+              maxHeight="520">
+
+            <padding>
+                <Insets top="30" right="40" bottom="30" left="40"/>
+            </padding>
+
+            <HBox alignment="CENTER_LEFT" spacing="20" styleClass="tabs-box">
+                <Label fx:id="signInTab"
+                       text="Sign In"
+                       styleClass="tab-inactive"
+                       onMouseClicked="#handleGoToLogin"/>
+                <Label fx:id="signUpTab"
+                       text="Sign Up"
+                       styleClass="tab-active"/>
+            </HBox>
+
+            <Label text="Full Name" styleClass="field-label"/>
+            <TextField fx:id="nameField"
+                       promptText="Enter your full name"
+                       styleClass="input-field"/>
+
+            <Label text="Email or Phone" styleClass="field-label"/>
+            <HBox styleClass="input-wrapper" alignment="CENTER_LEFT" spacing="8">
+                <ImageView fitWidth="18" fitHeight="18" preserveRatio="true">
+                    <image>
+                        <Image url="@../images/email_icon.png"/>
+                    </image>
+                </ImageView>
+                <TextField fx:id="emailField"
+                           promptText="Enter your email or phone"
+                           styleClass="input-field-flat"
+                           HBox.hgrow="ALWAYS"/>
+            </HBox>
+
+            <Label text="Password" styleClass="field-label"/>
+            <HBox styleClass="input-wrapper" alignment="CENTER_LEFT" spacing="8">
+                <ImageView fitWidth="18" fitHeight="18" preserveRatio="true">
+                    <image>
+                        <Image url="@../images/lock_icon.png"/>
+                    </image>
+                </ImageView>
+                <PasswordField fx:id="passwordField"
+                               promptText="Enter your password"
+                               styleClass="input-field-flat"
+                               HBox.hgrow="ALWAYS"/>
+                <TextField fx:id="visiblePasswordField"
+                           promptText="Enter your password"
+                           styleClass="input-field-flat"
+                           visible="false"
+                           managed="false"
+                           HBox.hgrow="ALWAYS"/>
+                <Button styleClass="show-hide-btn"
+                        onAction="#handleShowHidePassword">
+                    <graphic>
+                        <ImageView fx:id="passwordEyeIcon" fitWidth="18" fitHeight="18" preserveRatio="true">
+                            <image>
+                                <Image url="@../images/eye_closed.png"/>
+                            </image>
+                        </ImageView>
+                    </graphic>
+                </Button>
+            </HBox>
+
+            <Label text="Confirm Password" styleClass="field-label"/>
+            <HBox styleClass="input-wrapper" alignment="CENTER_LEFT" spacing="8">
+                <ImageView fitWidth="18" fitHeight="18" preserveRatio="true">
+                    <image>
+                        <Image url="@../images/lock_icon.png"/>
+                    </image>
+                </ImageView>
+                <PasswordField fx:id="confirmPasswordField"
+                               promptText="Confirm your password"
+                               styleClass="input-field-flat"
+                               HBox.hgrow="ALWAYS"/>
+                <TextField fx:id="visibleConfirmField"
+                           promptText="Confirm your password"
+                           styleClass="input-field-flat"
+                           visible="false"
+                           managed="false"
+                           HBox.hgrow="ALWAYS"/>
+                <Button styleClass="show-hide-btn"
+                        onAction="#handleShowHideConfirm">
+                    <graphic>
+                        <ImageView fx:id="confirmEyeIcon" fitWidth="18" fitHeight="18" preserveRatio="true">
+                            <image>
+                                <Image url="@../images/eye_closed.png"/>
+                            </image>
+                        </ImageView>
+                    </graphic>
+                </Button>
+            </HBox>
+
+            <Label fx:id="errorLabel" styleClass="error-label"/>
+
+            <Button fx:id="signUpButton"
+                    text="Sign Up"
+                    styleClass="signup-btn"
+                    onAction="#handleSignUp"
+                    maxWidth="Infinity"/>
+
+        </VBox>
+
+    </StackPane>
+
+</AnchorPane>
