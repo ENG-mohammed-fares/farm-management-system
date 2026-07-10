@@ -7,8 +7,9 @@ import javafx.stage.Stage;
 public class SceneSwitcher {
 
     private static boolean darkMode = false;
+    private static String lastErrorMessage = "";
 
-    public static void switchTo(Stage stage, String fxmlPath) {
+    public static boolean switchTo(Stage stage, String fxmlPath) {
         try {
             FXMLLoader loader = new FXMLLoader(
                     SceneSwitcher.class.getResource(fxmlPath));
@@ -19,9 +20,23 @@ public class SceneSwitcher {
             }
 
             stage.getScene().setRoot(root);
+            lastErrorMessage = "";
+            return true;
         } catch (Exception e) {
             e.printStackTrace();
+            Throwable root = e;
+            while (root.getCause() != null) {
+                root = root.getCause();
+            }
+            String message = root.getMessage();
+            lastErrorMessage = root.getClass().getSimpleName()
+                    + (message != null && !message.isBlank() ? ": " + message : "");
+            return false;
         }
+    }
+
+    public static String getLastErrorMessage() {
+        return lastErrorMessage;
     }
 
     public static boolean isDarkMode() {

@@ -1,5 +1,6 @@
 package com.smartfarm.controller;
 
+import java.util.List;
 import java.util.Optional;
 
 import javafx.animation.FadeTransition;
@@ -13,6 +14,12 @@ import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 
 import com.smartfarm.util.SceneSwitcher;
+import com.smartfarm.service.FarmService;
+import com.smartfarm.service.WorkerService;
+import com.smartfarm.service.TransactionService;
+import com.smartfarm.util.SessionManager;
+import com.smartfarm.model.Harvest;
+import com.smartfarm.model.Transaction;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Scene;
@@ -84,6 +91,11 @@ public class DashboardController {
         navButtons.widthProperty().addListener((o, ov, nv) -> {
             if (activeButton != null) moveHighlight(activeButton, false);
         });
+
+        if (userName != null) {
+            String sessionName = SessionManager.getUserName();
+            userName.setText(sessionName != null && !sessionName.isBlank() ? sessionName : "Admin");
+        }
 
         showDashboard();
         syncThemeState();
@@ -168,12 +180,16 @@ public class DashboardController {
     }
 
     private GridPane buildKpiRow() {
+        int totalFields = FarmService.getTotalFieldsCount();
+        int activeWorkers = WorkerService.getActiveWorkersCount();
+        double totalHarvest = WorkerService.getTotalGoodQuantity();
+        TransactionService.FinancialSummary summary = TransactionService.getFinancialSummary();
+
         GridPane g = row(25, 25, 25, 25);
-        VBox c1 = buildKpiCard("\uD83C\uDF3F", "6", "Total Farms",
-                sparkBox(new double[]{3, 4, 3.5, 5, 4.5, 6, 5.5, 7}));
-        VBox c2 = buildKpiCard("\uD83D\uDC77", "18", "Active Workers", null);
-        VBox c3 = buildKpiCard("\uD83C\uDF3E", "12,450", "Total Harvest (kg)", null);
-        VBox c4 = buildKpiCard("\uD83D\uDCB0", "\u20AA 24,800", "Revenue", pill("+8.2%", true));
+        VBox c1 = buildKpiCard("\uD83C\uDF3F", String.valueOf(totalFields), "Total Farms", null);
+        VBox c2 = buildKpiCard("\uD83D\uDC77", String.valueOf(activeWorkers), "Active Workers", null);
+        VBox c3 = buildKpiCard("\uD83C\uDF3E", String.format("%,.0f", totalHarvest), "Total Harvest (kg)", null);
+        VBox c4 = buildKpiCard("\uD83D\uDCB0", String.format("\u20AA %,.0f", summary.revenue), "Revenue", null);
         addCells(g, c1, c2, c3, c4);
         return g;
     }
@@ -214,18 +230,23 @@ public class DashboardController {
     }
 
     private VBox buildBalanceCard() {
+        TransactionService.FinancialSummary summary = TransactionService.getFinancialSummary();
+        double total = summary.revenue + summary.expenses;
+        double salesPct = total > 0 ? (summary.revenue / total) * 100 : 0;
+        double purchasesPct = 100 - salesPct;
+
         Label title = new Label("Balance");
         title.getStyleClass().add("card-title");
-        Label badge = new Label("On track");
-        badge.getStyleClass().add("pill-up");
+        Label badge = new Label(summary.netProfit >= 0 ? "On track" : "Over budget");
+        badge.getStyleClass().add(summary.netProfit >= 0 ? "pill-up" : "pill-down");
         HBox header = new HBox(8, title, badge);
         header.setAlignment(Pos.CENTER_LEFT);
 
-        StackPane ring = buildDualRing(120, 14, 68, 32);
+        StackPane ring = buildDualRing(120, 14, salesPct, purchasesPct);
 
         VBox legend = new VBox(14,
-                legendRow("dot-sale", "Sales", "\u20AA 42,300"),
-                legendRow("dot-purchase", "Purchases", "\u20AA 19,900"));
+                legendRow("dot-sale", "Sales", String.format("\u20AA %,.0f", summary.revenue)),
+                legendRow("dot-purchase", "Purchases", String.format("\u20AA %,.0f", summary.expenses)));
         legend.setAlignment(Pos.CENTER_LEFT);
 
         Region sp = new Region();
@@ -240,19 +261,24 @@ public class DashboardController {
     }
 
     private VBox buildEarningsCard() {
+        TransactionService.FinancialSummary summary = TransactionService.getFinancialSummary();
+        double margin = summary.revenue > 0 ? (summary.netProfit / summary.revenue) * 100 : 0;
+        if (margin < 0) margin = 0;
+        if (margin > 100) margin = 100;
+
         Label title = new Label("Earnings");
         title.getStyleClass().add("card-title");
-        Label sub = new Label("Total revenue");
+        Label sub = new Label("Net profit");
         sub.getStyleClass().add("card-sub");
-        Label big = new Label("\u20AA 6,078");
+        Label big = new Label(String.format("\u20AA %,.0f", summary.netProfit));
         big.getStyleClass().add("big-value");
-        Label pct = new Label("\u25B2 34% vs last month");
-        pct.getStyleClass().add("pct-up");
+        Label pct = new Label(String.format("%s %.0f%% margin", summary.netProfit >= 0 ? "\u25B2" : "\u25BC", margin));
+        pct.getStyleClass().add(summary.netProfit >= 0 ? "pct-up" : "pct-down");
 
         VBox left = new VBox(4, title, sub, big, pct);
         left.setAlignment(Pos.CENTER_LEFT);
 
-        StackPane ring = buildRing(92, 12, 78, "ring-progress", "78%", "Margin");
+        StackPane ring = buildRing(92, 12, margin, "ring-progress", String.format("%.0f%%", margin), "Margin");
 
         Region sp = new Region();
         HBox.setHgrow(sp, Priority.ALWAYS);
@@ -265,19 +291,29 @@ public class DashboardController {
     }
 
     private VBox buildProfileCard() {
-        Label avatar = new Label("MF");
-        avatar.getStyleClass().add("avatar");
-        Label name = new Label("Mohammad Fares");
-        name.getStyleClass().add("card-title");
-        Label email = new Label("manager@smartfarm.ps");
-        email.getStyleClass().add("card-sub");
+        String fullName = SessionManager.getUserName();
+        String initials = getInitials(fullName);
 
-        VBox nameBox = new VBox(2, name, email);
+        int fieldsCount = FarmService.getTotalFieldsCount();
+        int workersCount = WorkerService.getTotalWorkersCount();
+        int harvestsCount = WorkerService.getTotalHarvestsCount();
+
+        Label avatar = new Label(initials);
+        avatar.getStyleClass().add("avatar");
+        Label name = new Label(fullName);
+        name.getStyleClass().add("card-title");
+        Label role = new Label("Farm Administrator");
+        role.getStyleClass().add("card-sub");
+
+        VBox nameBox = new VBox(2, name, role);
         nameBox.setAlignment(Pos.CENTER_LEFT);
         HBox head = new HBox(12, avatar, nameBox);
         head.setAlignment(Pos.CENTER_LEFT);
 
-        HBox stats = new HBox(miniStat("6", "Farms"), miniStat("18", "Workers"), miniStat("34", "Harvests"));
+        HBox stats = new HBox(
+                miniStat(String.valueOf(fieldsCount), "Fields"),
+                miniStat(String.valueOf(workersCount), "Workers"),
+                miniStat(String.valueOf(harvestsCount), "Harvests"));
         stats.setAlignment(Pos.CENTER);
 
         VBox card = styledCard(head, divider(), stats);
@@ -286,14 +322,33 @@ public class DashboardController {
         return card;
     }
 
+    private String getInitials(String fullName) {
+        if (fullName == null || fullName.trim().isEmpty()) return "?";
+        String[] parts = fullName.trim().split("\\s+");
+        if (parts.length == 1) return parts[0].substring(0, Math.min(2, parts[0].length())).toUpperCase();
+        return ("" + parts[0].charAt(0) + parts[1].charAt(0)).toUpperCase();
+    }
+
     private VBox buildRecentHarvestsCard() {
         Label title = new Label("Recent Harvests");
         title.getStyleClass().add("card-title");
 
-        VBox list = new VBox(12,
-                harvestRow("\uD83C\uDF45", "Tomatoes", "Today", "850 kg"),
-                harvestRow("\uD83C\uDF3E", "Wheat", "2 days ago", "3,200 kg"),
-                harvestRow("\uD83E\uDED2", "Olives", "5 days ago", "1,150 kg"));
+        VBox list = new VBox(12);
+        List<Harvest> harvests = WorkerService.getAllHarvests();
+        int limit = Math.min(3, harvests.size());
+
+        if (limit == 0) {
+            Label empty = new Label("No harvests recorded yet");
+            empty.getStyleClass().add("card-sub");
+            list.getChildren().add(empty);
+        } else {
+            for (int i = 0; i < limit; i++) {
+                Harvest h = harvests.get(i);
+                String qty = String.format("%,.0f %s", h.getQuantityGood(), h.getUnit());
+                String dateStr = formatRelativeDate(h.getHarvestDate());
+                list.getChildren().add(harvestRow("\uD83C\uDF3E", h.getCropName(), dateStr, qty));
+            }
+        }
 
         VBox card = styledCard(title, list);
         card.setSpacing(14);
@@ -305,15 +360,38 @@ public class DashboardController {
         Label title = new Label("Recent Transactions");
         title.getStyleClass().add("card-title");
 
-        VBox list = new VBox(12,
-                txRow("SALE", "\u20AA 1,200", "Today", "+5%", true),
-                txRow("PURCHASE", "\u20AA 320", "Yesterday", "-2%", false),
-                txRow("PAYMENT", "\u20AA 450", "2 days ago", "-1%", false));
+        VBox list = new VBox(12);
+        List<Transaction> transactions = TransactionService.getAllTransactions();
+        int limit = Math.min(3, transactions.size());
+
+        if (limit == 0) {
+            Label empty = new Label("No transactions recorded yet");
+            empty.getStyleClass().add("card-sub");
+            list.getChildren().add(empty);
+        } else {
+            for (int i = 0; i < limit; i++) {
+                Transaction t = transactions.get(i);
+                String sign = "PURCHASE".equals(t.getType()) || "PAYMENT".equals(t.getType()) ? "-" : "+";
+                String amount = String.format("%s\u20AA %,.0f", sign, t.getAmount());
+                String dateStr = formatRelativeDate(t.getTransactionDate());
+                list.getChildren().add(txRow(t.getType(), amount, dateStr, "", true));
+            }
+        }
 
         VBox card = styledCard(title, list);
         card.setSpacing(14);
         card.setPrefHeight(210);
         return card;
+    }
+
+    private String formatRelativeDate(java.time.LocalDate date) {
+        if (date == null) return "";
+        long days = java.time.temporal.ChronoUnit.DAYS.between(date, java.time.LocalDate.now());
+        if (days == 0) return "Today";
+        if (days == 1) return "Yesterday";
+        if (days < 7) return days + " days ago";
+        if (days < 14) return "1 week ago";
+        return (days / 7) + " weeks ago";
     }
 
     private VBox buildQuickActionsCard() {
@@ -330,9 +408,9 @@ public class DashboardController {
             grid.getColumnConstraints().add(cc);
         }
 
-        Button b1 = quickBtn("\u2795  Add Farm", this::showFields);
-        Button b2 = quickBtn("\uD83D\uDC77  Add Worker", this::showWorkers);
-        Button b3 = quickBtn("\uD83C\uDF3E  New Harvest", this::showHarvests);
+        Button b1 = quickBtn("\u2795  Add Field", this::showFields);
+        Button b2 = quickBtn("\uD83D\uDC77  Add Worker", () -> { showWorkers(); showAddWorkerDialog(); });
+        Button b3 = quickBtn("\uD83C\uDF3E  View Harvests", this::showHarvests);
         Button b4 = quickBtn("\uD83D\uDCCA  View Reports", this::showReports);
 
         grid.add(b1, 0, 0);
@@ -444,8 +522,13 @@ public class DashboardController {
         VBox txt = new VBox(1, amt, d);
         Region sp = new Region();
         HBox.setHgrow(sp, Priority.ALWAYS);
-        Label ch = pill(change, up);
-        HBox h = new HBox(10, badge, txt, sp, ch);
+        HBox h;
+        if (change == null || change.isEmpty()) {
+            h = new HBox(10, badge, txt, sp);
+        } else {
+            Label ch = pill(change, up);
+            h = new HBox(10, badge, txt, sp, ch);
+        }
         h.setAlignment(Pos.CENTER_LEFT);
         return h;
     }
@@ -569,11 +652,15 @@ public class DashboardController {
         VBox root = new VBox(18);
         root.getStyleClass().add("dash-root");
 
+        int totalFields = FarmService.getTotalFieldsCount();
+        double totalDunums = FarmService.getTotalDunums();
+        int activeCrops = FarmService.getActiveCropsCount();
+
         GridPane stats = row(33.33, 33.33, 33.33);
         addCells(stats,
-                buildFieldStatCard("\uD83C\uDF3F", "6", "Total Fields"),
-                buildFieldStatCard("\uD83D\uDCCF", "32", "Total Dunums"),
-                buildFieldStatCard("\uD83C\uDF31", "9", "Active Crops"));
+                buildFieldStatCard("\uD83C\uDF3F", String.valueOf(totalFields), "Total Fields"),
+                buildFieldStatCard("\uD83D\uDCCF", String.format("%,.0f", totalDunums), "Total Area (m\u00B2)"),
+                buildFieldStatCard("\uD83C\uDF31", String.valueOf(activeCrops), "Active Crops"));
 
         HBox toolbar = new HBox(12);
         toolbar.setAlignment(Pos.CENTER_LEFT);
@@ -588,47 +675,114 @@ public class DashboardController {
 
         Button addBtn = new Button("\u2795  Add Field");
         addBtn.getStyleClass().add("action-btn");
+        addBtn.setOnAction(e -> showAddFieldDialog());
 
         toolbar.getChildren().addAll(searchField, sp, addBtn);
 
-        String[][] fields = {
-                {"Field A-1", "Olive Farm", "8", "Good", "\uD83D\uDFE2", "3 days ago",
-                        "Olives\u200E\u200E,\u200E\u200EWheat", "\uD83E\uDED2 Olives (450 trees)|\uD83C\uDF3E Wheat (3 dunums)"},
-                {"Field A-2", "Vegetable Garden", "5", "Excellent", "\uD83D\uDFE2", "Today",
-                        "Tomatoes\u200E\u200E,\u200E\u200ECucumbers", "\uD83C\uDF45 Tomatoes (2 dunums)|\uD83E\uDD52 Cucumbers (2 dunums)"},
-                {"Field B-1", "Grain Zone", "10", "Fair", "\uD83D\uDFE1", "1 week ago",
-                        "Wheat\u200E\u200E,\u200E\u200EBarley", "\uD83C\uDF3E Wheat (6 dunums)|\uD83C\uDF3E Barley (4 dunums)"},
-                {"Field C-1", "Fruit Orchard", "4", "Good", "\uD83D\uDFE2", "2 days ago",
-                        "Citrus\u200E\u200E,\u200E\u200EFigs", "\uD83C\uDF4A Citrus (150 trees)|\uD83C\uDF5E Figs (80 trees)"},
-                {"Field C-3", "New Plot", "5", "Not Tested", "\u26AA", "Never",
-                        "None", ""},
-        };
-
         VBox fieldsList = new VBox(14);
-        populateFields(fieldsList, fields, "");
+        List<com.smartfarm.model.Field> fields = FarmService.getAllFields();
+        populateFieldsReal(fieldsList, fields, "");
 
         searchField.textProperty().addListener((obs, oldVal, newVal) -> {
-            populateFields(fieldsList, fields, newVal.trim().toLowerCase());
+            populateFieldsReal(fieldsList, fields, newVal.trim().toLowerCase());
         });
 
         root.getChildren().addAll(stats, toolbar, fieldsList);
         return root;
     }
 
-    private void populateFields(VBox container, String[][] fields, String query) {
+    private void showAddFieldDialog() {
+        Dialog<ButtonType> dialog = new Dialog<>();
+        dialog.setTitle("Add New Field");
+        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+
+        VBox content = new VBox(10);
+        content.setPadding(new Insets(15));
+
+        TextField nameField = new TextField();
+        nameField.setPromptText("Field name (e.g. Field D-1)");
+
+        TextField sizeField = new TextField();
+        sizeField.setPromptText("Enter size");
+
+        ComboBox<String> unitBox = new ComboBox<>();
+        unitBox.getItems().addAll(com.smartfarm.util.AreaUnitConverter.ALL_UNITS);
+        unitBox.setValue(com.smartfarm.util.AreaUnitConverter.SQUARE_METER);
+        unitBox.setMaxWidth(Double.MAX_VALUE);
+
+        HBox sizeRow = new HBox(8, sizeField, unitBox);
+        HBox.setHgrow(sizeField, Priority.ALWAYS);
+
+        ComboBox<String> soilBox = new ComboBox<>();
+        soilBox.getItems().addAll("EXCELLENT", "GOOD", "FAIR", "POOR", "NOT_TESTED");
+        soilBox.setValue("NOT_TESTED");
+        soilBox.setMaxWidth(Double.MAX_VALUE);
+
+        TextField locationField = new TextField();
+        locationField.setPromptText("Location");
+
+        Label errorLabel = new Label();
+        errorLabel.setStyle("-fx-text-fill: #D32F2F; -fx-font-size: 12px;");
+
+        content.getChildren().addAll(
+                new Label("Field Name"), nameField,
+                new Label("Size"), sizeRow,
+                new Label("Soil Status"), soilBox,
+                new Label("Location"), locationField,
+                errorLabel);
+
+        dialog.getDialogPane().setContent(content);
+
+        Button okButton = (Button) dialog.getDialogPane().lookupButton(ButtonType.OK);
+        okButton.addEventFilter(javafx.event.ActionEvent.ACTION, event -> {
+            FarmService.Result result = FarmService.addField(
+                    nameField.getText(), sizeField.getText(), unitBox.getValue(), soilBox.getValue(), locationField.getText());
+
+            if (!result.success) {
+                errorLabel.setText(result.message);
+                event.consume();
+            }
+        });
+
+        Optional<ButtonType> resultBtn = dialog.showAndWait();
+        if (resultBtn.isPresent() && resultBtn.get() == ButtonType.OK) {
+            showFields();
+        }
+    }
+
+    private void populateFieldsReal(VBox container, List<com.smartfarm.model.Field> fields, String query) {
         container.getChildren().clear();
-        for (String[] f : fields) {
+        for (com.smartfarm.model.Field f : fields) {
+            List<com.smartfarm.model.Crop> crops = FarmService.getCropsByField(f.getFieldId());
+
             if (!query.isEmpty()) {
-                String combined = (f[0] + " " + f[1] + " " + f[6]).toLowerCase();
+                String cropNames = crops.stream().map(com.smartfarm.model.Crop::getName)
+                        .reduce((a, b) -> a + " " + b).orElse("");
+                String combined = (f.getName() + " " + f.getLocation() + " " + cropNames).toLowerCase();
                 if (!combined.contains(query)) continue;
             }
-            container.getChildren().add(buildFieldCard(f[0], f[1], f[2], f[3], f[4], f[5], f[7]));
+
+            String soilDot = getSoilDot(f.getSoilStatus());
+            container.getChildren().add(buildFieldCard(
+                    f.getFieldId(), f.getName(), f.getLocation() != null ? f.getLocation() : "",
+                    String.format("%,.0f", f.getSizeDunums()), f.getSoilStatus(),
+                    soilDot, "N/A", crops));
         }
         if (container.getChildren().isEmpty()) {
             Label empty = new Label("No fields found");
             empty.getStyleClass().add("card-sub");
             empty.setStyle("-fx-padding: 30 0 30 0; -fx-font-size: 14px;");
             container.getChildren().add(empty);
+        }
+    }
+
+    private String getSoilDot(String soilStatus) {
+        if (soilStatus == null) return "\u26AA";
+        switch (soilStatus) {
+            case "EXCELLENT": case "GOOD": return "\uD83D\uDFE2";
+            case "FAIR": return "\uD83D\uDFE1";
+            case "POOR": return "\uD83D\uDD34";
+            default: return "\u26AA";
         }
     }
 
@@ -647,8 +801,8 @@ public class DashboardController {
         return card;
     }
 
-    private VBox buildFieldCard(String name, String desc, String dunums, String soil,
-                                String soilDot, String lastIrrigation, String cropsData) {
+    private VBox buildFieldCard(int fieldId, String name, String desc, String dunums, String soil,
+                                String soilDot, String lastIrrigation, List<com.smartfarm.model.Crop> crops) {
         Label nameLabel = new Label("\uD83C\uDF3F " + name);
         nameLabel.getStyleClass().add("field-name");
 
@@ -661,11 +815,16 @@ public class DashboardController {
         Label statusBadge = new Label(soilDot + " " + soil);
         statusBadge.getStyleClass().add("soil-badge");
 
-        HBox header = new HBox(8, nameLabel, descLabel, sp1, statusBadge);
+        Button deleteFieldBtn = new Button("\uD83D\uDDD1");
+        deleteFieldBtn.getStyleClass().add("filter-btn");
+        deleteFieldBtn.setStyle("-fx-text-fill: #D32F2F; -fx-font-size: 12px; -fx-padding: 4 8 4 8;");
+        deleteFieldBtn.setOnAction(e -> confirmDeleteField(fieldId, name));
+
+        HBox header = new HBox(8, nameLabel, descLabel, sp1, statusBadge, deleteFieldBtn);
         header.setAlignment(Pos.CENTER_LEFT);
 
         HBox infoRow = new HBox(24,
-                fieldInfo("\uD83D\uDCCF", "Size", dunums + " dunums"),
+                fieldInfo("\uD83D\uDCCF", "Size", dunums + " m\u00B2"),
                 fieldInfo("\uD83C\uDF0D", "Soil", soil),
                 fieldInfo("\uD83D\uDCA7", "Last Irrigation", lastIrrigation));
         infoRow.setAlignment(Pos.CENTER_LEFT);
@@ -673,24 +832,171 @@ public class DashboardController {
         VBox card = styledCard(header, divider(), infoRow);
         card.setSpacing(12);
 
-        if (cropsData != null && !cropsData.isEmpty()) {
-            Label cropsTitle = new Label("\uD83C\uDF31 Planted Crops");
-            cropsTitle.getStyleClass().add("crops-title");
+        Label cropsTitle = new Label("\uD83C\uDF31 Planted Crops");
+        cropsTitle.getStyleClass().add("crops-title");
 
-            HBox cropsRow = new HBox(10);
-            cropsRow.setAlignment(Pos.CENTER_LEFT);
+        Region cropSp = new Region();
+        HBox.setHgrow(cropSp, Priority.ALWAYS);
 
-            String[] crops = cropsData.split("\\|");
-            for (String crop : crops) {
-                Label chip = new Label(crop.trim());
+        Button addCropBtn = new Button("\u2795 Add Crop");
+        addCropBtn.getStyleClass().add("filter-btn");
+        addCropBtn.setStyle("-fx-font-size: 11px; -fx-padding: 4 10 4 10;");
+        addCropBtn.setOnAction(e -> showAddCropDialog(fieldId));
+
+        HBox cropsHeader = new HBox(cropsTitle, cropSp, addCropBtn);
+        cropsHeader.setAlignment(Pos.CENTER_LEFT);
+
+        HBox cropsRow = new HBox(10);
+        cropsRow.setAlignment(Pos.CENTER_LEFT);
+        cropsRow.setStyle("-fx-cursor: hand;");
+
+        if (!crops.isEmpty()) {
+            for (com.smartfarm.model.Crop c : crops) {
+                Label chip = new Label(c.getName() + (c.getQuantity() != null && !c.getQuantity().isEmpty() ? " (" + c.getQuantity() + ")" : ""));
                 chip.getStyleClass().add("crop-chip");
+                chip.setStyle(chip.getStyle() + "-fx-cursor: hand;");
+                chip.setOnMouseClicked(e -> showEditCropDialog(c));
                 cropsRow.getChildren().add(chip);
             }
-
-            card.getChildren().addAll(divider(), cropsTitle, cropsRow);
+        } else {
+            Label none = new Label("No crops planted yet");
+            none.getStyleClass().add("card-sub");
+            cropsRow.getChildren().add(none);
         }
 
+        card.getChildren().addAll(divider(), cropsHeader, cropsRow);
+
         return card;
+    }
+
+    private void confirmDeleteField(int fieldId, String fieldName) {
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Delete Field");
+        alert.setHeaderText("Delete " + fieldName + "?");
+        alert.setContentText("This cannot be undone. Fields with active crops cannot be deleted.");
+        Optional<ButtonType> result = alert.showAndWait();
+        if (result.isPresent() && result.get() == ButtonType.OK) {
+            FarmService.Result r = FarmService.deleteField(fieldId);
+            if (r.success) {
+                showFields();
+            } else {
+                Alert error = new Alert(Alert.AlertType.ERROR);
+                error.setTitle("Cannot Delete");
+                error.setContentText(r.message);
+                error.showAndWait();
+            }
+        }
+    }
+
+    private void showEditCropDialog(com.smartfarm.model.Crop crop) {
+        Dialog<ButtonType> dialog = new Dialog<>();
+        dialog.setTitle("Edit Crop: " + crop.getName());
+        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+
+        ButtonType deleteType = new ButtonType("Delete Crop", ButtonBar.ButtonData.LEFT);
+        dialog.getDialogPane().getButtonTypes().add(deleteType);
+
+        VBox content = new VBox(10);
+        content.setPadding(new Insets(15));
+
+        ComboBox<String> statusBox = new ComboBox<>();
+        statusBox.getItems().addAll("GROWING", "READY", "HARVESTED");
+        statusBox.setValue(crop.getStatus());
+        statusBox.setMaxWidth(Double.MAX_VALUE);
+
+        Label errorLabel = new Label();
+        errorLabel.setStyle("-fx-text-fill: #D32F2F; -fx-font-size: 12px;");
+
+        content.getChildren().addAll(
+                new Label("Crop Name: " + crop.getName()),
+                new Label("Type: " + crop.getType()),
+                new Label("Update Status"), statusBox,
+                errorLabel);
+
+        dialog.getDialogPane().setContent(content);
+
+        Button okButton = (Button) dialog.getDialogPane().lookupButton(ButtonType.OK);
+        okButton.addEventFilter(javafx.event.ActionEvent.ACTION, event -> {
+            FarmService.Result result = FarmService.updateCropStatus(crop.getCropId(), statusBox.getValue());
+            if (!result.success) {
+                errorLabel.setText(result.message);
+                event.consume();
+            }
+        });
+
+        Optional<ButtonType> resultBtn = dialog.showAndWait();
+
+        if (resultBtn.isPresent() && resultBtn.get() == deleteType) {
+            Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+            confirm.setTitle("Delete Crop");
+            confirm.setHeaderText("Delete " + crop.getName() + "?");
+            confirm.setContentText("This cannot be undone. Crops with harvest records cannot be deleted.");
+            Optional<ButtonType> confirmResult = confirm.showAndWait();
+            if (confirmResult.isPresent() && confirmResult.get() == ButtonType.OK) {
+                FarmService.Result deleteResult = FarmService.deleteCrop(crop.getCropId());
+                if (!deleteResult.success) {
+                    Alert error = new Alert(Alert.AlertType.ERROR);
+                    error.setTitle("Cannot Delete");
+                    error.setContentText(deleteResult.message);
+                    error.showAndWait();
+                }
+                showFields();
+            }
+        } else if (resultBtn.isPresent() && resultBtn.get() == ButtonType.OK) {
+            showFields();
+        }
+    }
+
+    private void showAddCropDialog(int fieldId) {
+        Dialog<ButtonType> dialog = new Dialog<>();
+        dialog.setTitle("Add New Crop");
+        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+
+        VBox content = new VBox(10);
+        content.setPadding(new Insets(15));
+
+        TextField nameField = new TextField();
+        nameField.setPromptText("Crop name (e.g. Tomatoes)");
+
+        ComboBox<String> typeBox = new ComboBox<>();
+        typeBox.getItems().addAll("VEGETABLE", "FRUIT", "GRAIN", "TREE");
+        typeBox.setValue("VEGETABLE");
+        typeBox.setMaxWidth(Double.MAX_VALUE);
+
+        DatePicker plantedDatePicker = new DatePicker(java.time.LocalDate.now());
+        plantedDatePicker.setMaxWidth(Double.MAX_VALUE);
+
+        TextField quantityField = new TextField();
+        quantityField.setPromptText("Quantity (e.g. 2 dunums, 450 trees)");
+
+        Label errorLabel = new Label();
+        errorLabel.setStyle("-fx-text-fill: #D32F2F; -fx-font-size: 12px;");
+
+        content.getChildren().addAll(
+                new Label("Crop Name"), nameField,
+                new Label("Type"), typeBox,
+                new Label("Planted Date"), plantedDatePicker,
+                new Label("Quantity"), quantityField,
+                errorLabel);
+
+        dialog.getDialogPane().setContent(content);
+
+        Button okButton = (Button) dialog.getDialogPane().lookupButton(ButtonType.OK);
+        okButton.addEventFilter(javafx.event.ActionEvent.ACTION, event -> {
+            FarmService.Result result = FarmService.addCrop(
+                    fieldId, nameField.getText(), typeBox.getValue(),
+                    plantedDatePicker.getValue(), quantityField.getText());
+
+            if (!result.success) {
+                errorLabel.setText(result.message);
+                event.consume();
+            }
+        });
+
+        Optional<ButtonType> resultBtn = dialog.showAndWait();
+        if (resultBtn.isPresent() && resultBtn.get() == ButtonType.OK) {
+            showFields();
+        }
     }
 
     private VBox fieldInfo(String icon, String label, String value) {
@@ -711,68 +1017,188 @@ public class DashboardController {
         setContent(buildHarvests());
     }
 
+    private String harvestFilter = "PENDING";
+
     private Node buildHarvests() {
         VBox root = new VBox(18);
         root.getStyleClass().add("dash-root");
 
+        int totalHarvests = WorkerService.getTotalHarvestsCount();
+        double totalKg = WorkerService.getTotalGoodQuantity();
+        int pendingCount = WorkerService.getPendingHarvestsCount();
+
         GridPane stats = row(33.33, 33.33, 33.33);
         addCells(stats,
-                buildFieldStatCard("\uD83C\uDF3E", "34", "Total Harvests"),
-                buildFieldStatCard("\u2696\uFE0F", "18,420", "Total kg"),
-                buildFieldStatCard("\uD83C\uDFC6", "Tomatoes", "Best Crop"));
+                buildFieldStatCard("\uD83C\uDF3E", String.valueOf(totalHarvests), "Total Harvests"),
+                buildFieldStatCard("\u2696\uFE0F", String.format("%,.0f", totalKg), "Approved kg"),
+                buildFieldStatCard("\u23F3", String.valueOf(pendingCount), "Pending Review"));
 
-        HBox toolbar = new HBox(12);
-        toolbar.setAlignment(Pos.CENTER_LEFT);
+        HBox filterBar = new HBox(8);
+        filterBar.setAlignment(Pos.CENTER_LEFT);
+        String[] fNames = {"Pending", "Approved", "Rejected", "All"};
+        String[] fKeys = {"PENDING", "APPROVED", "REJECTED", "ALL"};
+        String[] fIcons = {"\u23F3", "\u2705", "\u274C", "\uD83D\uDCCB"};
+        for (int i = 0; i < fNames.length; i++) {
+            Button fb = new Button(fIcons[i] + "  " + fNames[i]);
+            String key = fKeys[i];
+            fb.getStyleClass().add("filter-btn");
+            if (harvestFilter.equals(key)) fb.getStyleClass().add("filter-active");
+            fb.setOnAction(e -> { harvestFilter = key; showHarvests(); });
+            filterBar.getChildren().add(fb);
+        }
+
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
         TextField searchField = new TextField();
-        searchField.setPromptText("\uD83D\uDD0D Search harvests...");
+        searchField.setPromptText("\uD83D\uDD0D Search...");
         searchField.getStyleClass().add("search-field");
-        searchField.setPrefWidth(250);
-        toolbar.getChildren().add(searchField);
+        searchField.setPrefWidth(200);
+        filterBar.getChildren().addAll(spacer, searchField);
 
-        String[][] data = {
-                {"\uD83C\uDF45", "Tomatoes", "Field A-2", "850", "0", "Today"},
-                {"\uD83C\uDF3E", "Wheat", "Field B-1", "3,200", "120", "2 days ago"},
-                {"\uD83E\uDED2", "Olives", "Field A-1", "1,150", "45", "5 days ago"},
-                {"\uD83E\uDD52", "Cucumbers", "Field A-2", "620", "30", "1 week ago"},
-                {"\uD83C\uDF4A", "Citrus", "Field C-1", "2,800", "90", "1 week ago"},
-                {"\uD83C\uDF3E", "Barley", "Field B-1", "4,100", "200", "2 weeks ago"},
-                {"\uD83C\uDF45", "Tomatoes", "Field A-2", "780", "25", "2 weeks ago"},
-                {"\uD83E\uDED2", "Olives", "Field A-1", "2,900", "60", "3 weeks ago"},
-        };
-
+        List<Harvest> harvests = WorkerService.getHarvestsByStatus(harvestFilter);
         VBox list = new VBox(12);
-        populateHarvests(list, data, "");
+        populateHarvestsReal(list, harvests, "");
 
-        searchField.textProperty().addListener((obs, o, n) -> populateHarvests(list, data, n.trim().toLowerCase()));
+        searchField.textProperty().addListener((obs, o, n) -> populateHarvestsReal(list, harvests, n.trim().toLowerCase()));
 
-        root.getChildren().addAll(stats, toolbar, list);
+        root.getChildren().addAll(stats, filterBar, list);
         return root;
     }
 
-    private void populateHarvests(VBox container, String[][] data, String query) {
+    private String findBestCrop(List<Harvest> harvests) {
+        if (harvests.isEmpty()) return "N/A";
+        java.util.Map<String, Double> totals = new java.util.HashMap<>();
+        for (Harvest h : harvests) {
+            totals.merge(h.getCropName(), h.getQuantityGood(), Double::sum);
+        }
+        return totals.entrySet().stream()
+                .max(java.util.Map.Entry.comparingByValue())
+                .map(java.util.Map.Entry::getKey)
+                .orElse("N/A");
+    }
+
+    private void showAddWorkerDialog() {
+        Dialog<ButtonType> dialog = new Dialog<>();
+        dialog.setTitle("Add New Worker");
+        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+
+        VBox content = new VBox(10);
+        content.setPadding(new Insets(15));
+
+        Label helpLabel = new Label("Search by the worker's registered name, email, or phone");
+        helpLabel.getStyleClass().add("card-sub");
+        helpLabel.setStyle("-fx-font-size: 11px;");
+
+        TextField identifierField = new TextField();
+        identifierField.setPromptText("Name, email, or phone");
+
+        ComboBox<String> jobBox = new ComboBox<>();
+        jobBox.getItems().addAll("IRRIGATOR", "HARVESTER", "PLOWER");
+        jobBox.setValue("HARVESTER");
+        jobBox.setMaxWidth(Double.MAX_VALUE);
+
+        TextField wageField = new TextField();
+        wageField.setPromptText("Wage per unit (e.g. 8)");
+
+        ComboBox<String> unitBox = new ComboBox<>();
+        unitBox.getItems().addAll("liter", "dunum", "kg", "piece");
+        unitBox.setValue("kg");
+        unitBox.setMaxWidth(Double.MAX_VALUE);
+
+        Label errorLabel = new Label();
+        errorLabel.setStyle("-fx-text-fill: #D32F2F; -fx-font-size: 12px;");
+
+        content.getChildren().addAll(
+                helpLabel,
+                new Label("Worker Identifier"), identifierField,
+                new Label("Job Type"), jobBox,
+                new Label("Wage per Unit"), wageField,
+                new Label("Wage Unit"), unitBox,
+                errorLabel);
+
+        dialog.getDialogPane().setContent(content);
+
+        Button okButton = (Button) dialog.getDialogPane().lookupButton(ButtonType.OK);
+        okButton.addEventFilter(javafx.event.ActionEvent.ACTION, event -> {
+            WorkerService.Result result = WorkerService.assignNewWorker(
+                    identifierField.getText(), jobBox.getValue(), wageField.getText(), unitBox.getValue());
+
+            if (!result.success) {
+                errorLabel.setText(result.message);
+                event.consume();
+            }
+        });
+
+        Optional<ButtonType> resultBtn = dialog.showAndWait();
+        if (resultBtn.isPresent() && resultBtn.get() == ButtonType.OK) {
+            showWorkers();
+        }
+    }
+
+    private String cropIcon(String cropName) {
+        if (cropName == null) return "\uD83C\uDF31";
+        String n = cropName.toLowerCase();
+        if (n.contains("tomato")) return "\uD83C\uDF45";
+        if (n.contains("wheat") || n.contains("barley")) return "\uD83C\uDF3E";
+        if (n.contains("olive")) return "\uD83E\uDED2";
+        if (n.contains("cucumber")) return "\uD83E\uDD52";
+        if (n.contains("citrus")) return "\uD83C\uDF4A";
+        if (n.contains("fig")) return "\uD83C\uDF5E";
+        return "\uD83C\uDF31";
+    }
+
+    private void populateHarvestsReal(VBox container, List<Harvest> data, String query) {
         container.getChildren().clear();
-        for (String[] d : data) {
-            if (!query.isEmpty() && !(d[1] + " " + d[2]).toLowerCase().contains(query)) continue;
-            Label ic = new Label(d[0]);
+        for (Harvest h : data) {
+            if (!query.isEmpty() && !(h.getCropName() + " " + h.getFieldName() + " " + h.getWorkerName()).toLowerCase().contains(query)) continue;
+
+            Label ic = new Label(cropIcon(h.getCropName()));
             ic.getStyleClass().add("row-icon");
-            Label crop = new Label(d[1]);
+            Label crop = new Label(h.getCropName());
             crop.getStyleClass().add("list-primary");
-            Label field = new Label(d[2] + " \u2022 " + d[5]);
+            Label field = new Label(h.getWorkerName() + " \u2022 " + h.getFieldName() + " \u2022 " + formatRelativeDate(h.getHarvestDate()));
             field.getStyleClass().add("list-sub");
             VBox txt = new VBox(2, crop, field);
             Region sp = new Region();
             HBox.setHgrow(sp, Priority.ALWAYS);
-            Label good = new Label("\u2705 " + d[3] + " kg");
+            Label good = new Label(String.format("\u2705 %.0f %s", h.getQuantityGood(), h.getUnit()));
             good.getStyleClass().add("pct-up");
             good.setStyle("-fx-font-size: 13px;");
-            Label damaged = new Label("\u274C " + d[4] + " kg");
+            Label damaged = new Label(String.format("\u274C %.0f %s", h.getQuantityDamaged(), h.getUnit()));
             damaged.getStyleClass().add("pct-down");
             damaged.setStyle("-fx-font-size: 12px;");
             VBox nums = new VBox(2, good, damaged);
             nums.setAlignment(Pos.CENTER_RIGHT);
+
             HBox row = new HBox(12, ic, txt, sp, nums);
             row.setAlignment(Pos.CENTER_LEFT);
             row.getStyleClass().add("timeline-card");
+
+            if ("PENDING".equals(h.getStatus())) {
+                Button approveBtn = new Button("\u2714");
+                approveBtn.getStyleClass().add("filter-btn");
+                approveBtn.setStyle("-fx-text-fill: #2E7D32; -fx-font-weight: bold; -fx-padding: 4 10 4 10;");
+                approveBtn.setOnAction(e -> {
+                    WorkerService.approveHarvest(h.getHarvestId());
+                    showHarvests();
+                });
+
+                Button rejectBtn = new Button("\u2716");
+                rejectBtn.getStyleClass().add("filter-btn");
+                rejectBtn.setStyle("-fx-text-fill: #D32F2F; -fx-font-weight: bold; -fx-padding: 4 10 4 10;");
+                rejectBtn.setOnAction(e -> {
+                    WorkerService.rejectHarvest(h.getHarvestId());
+                    showHarvests();
+                });
+
+                VBox actions = new VBox(4, approveBtn, rejectBtn);
+                row.getChildren().add(actions);
+            } else {
+                Label statusBadge = new Label("APPROVED".equals(h.getStatus()) ? "Approved" : "Rejected");
+                statusBadge.getStyleClass().add("APPROVED".equals(h.getStatus()) ? "pill-up" : "pill-down");
+                row.getChildren().add(statusBadge);
+            }
+
             container.getChildren().add(row);
         }
         if (container.getChildren().isEmpty()) {
@@ -792,11 +1218,15 @@ public class DashboardController {
         VBox root = new VBox(18);
         root.getStyleClass().add("dash-root");
 
+        int totalWorkers = WorkerService.getTotalWorkersCount();
+        int activeWorkers = WorkerService.getActiveWorkersCount();
+        int fieldsCount = FarmService.getTotalFieldsCount();
+
         GridPane stats = row(33.33, 33.33, 33.33);
         addCells(stats,
-                buildFieldStatCard("\uD83D\uDC77", "18", "Total Workers"),
-                buildFieldStatCard("\u2705", "15", "Active"),
-                buildFieldStatCard("\uD83C\uDF3F", "5", "Fields Covered"));
+                buildFieldStatCard("\uD83D\uDC77", String.valueOf(totalWorkers), "Total Workers"),
+                buildFieldStatCard("\u2705", String.valueOf(activeWorkers), "Active"),
+                buildFieldStatCard("\uD83C\uDF3F", String.valueOf(fieldsCount), "Fields Covered"));
 
         HBox toolbar = new HBox(12);
         toolbar.setAlignment(Pos.CENTER_LEFT);
@@ -804,54 +1234,87 @@ public class DashboardController {
         searchField.setPromptText("\uD83D\uDD0D Search workers...");
         searchField.getStyleClass().add("search-field");
         searchField.setPrefWidth(250);
-        toolbar.getChildren().add(searchField);
 
-        String[][] data = {
-                {"AH", "Ahmad Hassan", "Irrigator", "Field A-1", "\u20AA 15/liter", "Active"},
-                {"MK", "Mohammad Khaled", "Harvester", "Field A-2", "\u20AA 8/kg", "Active"},
-                {"SK", "Sami Khalil", "Plower", "Field B-1", "\u20AA 50/dunum", "Active"},
-                {"OA", "Omar Ali", "Irrigator", "Field C-1", "\u20AA 15/liter", "Active"},
-                {"YS", "Yousef Saleh", "Harvester", "Field A-1", "\u20AA 10/kg", "Active"},
-                {"KN", "Khaled Nasser", "Harvester", "Field B-1", "\u20AA 8/kg", "Inactive"},
-                {"RA", "Rami Ahmad", "Plower", "Field C-1", "\u20AA 55/dunum", "Inactive"},
-                {"TM", "Tariq Mahmoud", "Irrigator", "Field A-2", "\u20AA 12/liter", "Active"},
-        };
+        Region workerSp = new Region();
+        HBox.setHgrow(workerSp, Priority.ALWAYS);
 
+        Button addWorkerBtn = new Button("\u2795  Add Worker");
+        addWorkerBtn.getStyleClass().add("action-btn");
+        addWorkerBtn.setOnAction(e -> showAddWorkerDialog());
+
+        toolbar.getChildren().addAll(searchField, workerSp, addWorkerBtn);
+
+        List<com.smartfarm.model.FarmWorker> workers = WorkerService.getAllWorkers();
         VBox list = new VBox(12);
-        populateWorkers(list, data, "");
+        populateWorkersReal(list, workers, "");
 
-        searchField.textProperty().addListener((obs, o, n) -> populateWorkers(list, data, n.trim().toLowerCase()));
+        searchField.textProperty().addListener((obs, o, n) -> populateWorkersReal(list, workers, n.trim().toLowerCase()));
 
         root.getChildren().addAll(stats, toolbar, list);
         return root;
     }
 
-    private void populateWorkers(VBox container, String[][] data, String query) {
+    private void populateWorkersReal(VBox container, List<com.smartfarm.model.FarmWorker> data, String query) {
         container.getChildren().clear();
-        for (String[] d : data) {
-            if (!query.isEmpty() && !(d[1] + " " + d[2] + " " + d[3]).toLowerCase().contains(query)) continue;
-            Label avatar = new Label(d[0]);
+        for (com.smartfarm.model.FarmWorker w : data) {
+            if (!query.isEmpty() && !(w.getUserName() + " " + w.getJobType()).toLowerCase().contains(query)) continue;
+
+            Label avatar = new Label(getInitials(w.getUserName()));
             avatar.getStyleClass().add("avatar");
             avatar.setStyle("-fx-font-size: 14px; -fx-min-width: 40; -fx-min-height: 40; -fx-max-width: 40; -fx-max-height: 40;");
-            Label name = new Label(d[1]);
+            Label name = new Label(w.getUserName());
             name.getStyleClass().add("list-primary");
-            Label role = new Label(d[2] + " \u2022 " + d[3]);
+            String rawJob = w.getJobType() != null ? w.getJobType() : "WORKER";
+            String jobLabel = rawJob.charAt(0) + rawJob.substring(1).toLowerCase();
+            Label role = new Label(jobLabel);
             role.getStyleClass().add("list-sub");
             VBox txt = new VBox(2, name, role);
             Region sp = new Region();
             HBox.setHgrow(sp, Priority.ALWAYS);
-            Label wage = new Label("\uD83D\uDCB0 " + d[4]);
+            Label wage = new Label(String.format("\uD83D\uDCB0 \u20AA %.0f/%s", w.getWagePerUnit(), w.getWageUnit()));
             wage.getStyleClass().add("mini-stat-value");
             wage.setStyle("-fx-font-size: 13px;");
             Label wageLabel = new Label("Wage per unit");
             wageLabel.getStyleClass().add("list-sub");
-            Label status = new Label(d[5]);
-            status.getStyleClass().add("Active".equals(d[5]) ? "pill-up" : "pill-down");
+            Label status = new Label(w.isActive() ? "Active" : "Inactive");
+            status.getStyleClass().add(w.isActive() ? "pill-up" : "pill-down");
             VBox right = new VBox(3, wage, wageLabel, status);
             right.setAlignment(Pos.CENTER_RIGHT);
-            HBox row = new HBox(12, avatar, txt, sp, right);
+
+            Button deleteBtn = new Button("\uD83D\uDDD1");
+            deleteBtn.getStyleClass().add("filter-btn");
+            deleteBtn.setStyle("-fx-text-fill: #D32F2F; -fx-font-size: 12px; -fx-padding: 4 8 4 8;");
+            int fwId = w.getFwId();
+            String workerName = w.getUserName();
+            deleteBtn.setOnAction(e -> {
+                Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+                alert.setTitle("Delete Worker");
+                alert.setHeaderText("Remove " + workerName + " from the farm?");
+                alert.setContentText("If this worker has harvest or log records, deletion will fail \u2014 deactivate instead in that case.");
+                Optional<ButtonType> result = alert.showAndWait();
+                if (result.isPresent() && result.get() == ButtonType.OK) {
+                    WorkerService.Result r = WorkerService.deleteWorker(fwId);
+                    if (r.success) {
+                        showWorkers();
+                    } else {
+                        Alert error = new Alert(Alert.AlertType.ERROR);
+                        error.setTitle("Cannot Delete");
+                        error.setContentText(r.message);
+                        error.showAndWait();
+                    }
+                }
+            });
+
+            HBox row = new HBox(12, avatar, txt, sp, right, deleteBtn);
             row.setAlignment(Pos.CENTER_LEFT);
             row.getStyleClass().add("timeline-card");
+            row.setOnMouseClicked(e -> {
+                if (e.getTarget() == deleteBtn || (e.getTarget() instanceof Node && isDescendantOf((Node) e.getTarget(), deleteBtn))) {
+                    return;
+                }
+                showEditWorkerDialog(w);
+            });
+            row.setStyle(row.getStyle() + "; -fx-cursor: hand;");
             container.getChildren().add(row);
         }
         if (container.getChildren().isEmpty()) {
@@ -859,6 +1322,69 @@ public class DashboardController {
             empty.getStyleClass().add("card-sub");
             empty.setStyle("-fx-padding: 30 0 30 0; -fx-font-size: 14px;");
             container.getChildren().add(empty);
+        }
+    }
+
+    private boolean isDescendantOf(Node node, Node ancestor) {
+        Node current = node;
+        while (current != null) {
+            if (current == ancestor) return true;
+            current = current.getParent();
+        }
+        return false;
+    }
+
+    private void showEditWorkerDialog(com.smartfarm.model.FarmWorker worker) {
+        Dialog<ButtonType> dialog = new Dialog<>();
+        dialog.setTitle("Edit Worker: " + worker.getUserName());
+        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+
+        VBox content = new VBox(10);
+        content.setPadding(new Insets(15));
+
+        ComboBox<String> jobBox = new ComboBox<>();
+        jobBox.getItems().addAll("IRRIGATOR", "HARVESTER", "PLOWER");
+        jobBox.setValue(worker.getJobType());
+        jobBox.setMaxWidth(Double.MAX_VALUE);
+
+        TextField wageField = new TextField(String.valueOf(worker.getWagePerUnit()));
+
+        ComboBox<String> unitBox = new ComboBox<>();
+        unitBox.getItems().addAll("liter", "dunum", "kg", "piece");
+        unitBox.setValue(worker.getWageUnit());
+        unitBox.setMaxWidth(Double.MAX_VALUE);
+
+        ComboBox<String> statusBox = new ComboBox<>();
+        statusBox.getItems().addAll("ACTIVE", "INACTIVE");
+        statusBox.setValue(worker.getStatus());
+        statusBox.setMaxWidth(Double.MAX_VALUE);
+
+        Label errorLabel = new Label();
+        errorLabel.setStyle("-fx-text-fill: #D32F2F; -fx-font-size: 12px;");
+
+        content.getChildren().addAll(
+                new Label("Job Type"), jobBox,
+                new Label("Wage per Unit"), wageField,
+                new Label("Wage Unit"), unitBox,
+                new Label("Status"), statusBox,
+                errorLabel);
+
+        dialog.getDialogPane().setContent(content);
+
+        Button okButton = (Button) dialog.getDialogPane().lookupButton(ButtonType.OK);
+        okButton.addEventFilter(javafx.event.ActionEvent.ACTION, event -> {
+            WorkerService.Result result = WorkerService.updateWorker(
+                    worker.getFwId(), jobBox.getValue(), wageField.getText(), unitBox.getValue(), statusBox.getValue());
+
+            if (!result.success) {
+                errorLabel.setText(result.message);
+                event.consume();
+            }
+        });
+
+        Optional<ButtonType> resultBtn = dialog.showAndWait();
+        if (resultBtn.isPresent() && resultBtn.get() == ButtonType.OK) {
+            showWorkers();
         }
     }
 
@@ -873,11 +1399,20 @@ public class DashboardController {
         VBox root = new VBox(18);
         root.getStyleClass().add("dash-root");
 
+        TransactionService.FinancialSummary summary = TransactionService.getFinancialSummary();
+
         GridPane stats = row(33.33, 33.33, 33.33);
         addCells(stats,
-                buildFieldStatCard("\uD83D\uDCB0", "\u20AA 42,300", "Total Revenue"),
-                buildFieldStatCard("\uD83D\uDED2", "\u20AA 19,900", "Total Expenses"),
-                buildFieldStatCard("\uD83D\uDCCA", "\u20AA 22,400", "Net Profit"));
+                buildFieldStatCard("\uD83D\uDCB0", String.format("\u20AA %,.0f", summary.revenue), "Total Revenue"),
+                buildFieldStatCard("\uD83D\uDED2", String.format("\u20AA %,.0f", summary.expenses), "Total Expenses"),
+                buildFieldStatCard("\uD83D\uDCCA", String.format("\u20AA %,.0f", summary.netProfit), "Net Profit"));
+
+        HBox txToolbar = new HBox(12);
+        txToolbar.setAlignment(Pos.CENTER_RIGHT);
+        Button addTxBtn = new Button("\u2795  Add Transaction");
+        addTxBtn.getStyleClass().add("action-btn");
+        addTxBtn.setOnAction(e -> showAddTransactionDialog());
+        txToolbar.getChildren().add(addTxBtn);
 
         HBox filterBar = new HBox(8);
         filterBar.setAlignment(Pos.CENTER_LEFT);
@@ -901,53 +1436,153 @@ public class DashboardController {
         searchField.setPrefWidth(200);
         filterBar.getChildren().addAll(spacer, searchField);
 
-        String[][] data = {
-                {"SALE", "\uD83D\uDCB5", "Sold Tomatoes", "500 kg to Central Market", "+\u20AA 1,200", "Today", "+5%", "up"},
-                {"PURCHASE", "\uD83D\uDED2", "Bought Fertilizer", "NPK Mix for Field A-2", "-\u20AA 320", "Yesterday", "-2%", "down"},
-                {"PAYMENT", "\uD83D\uDCB3", "Worker Salary", "Ahmad Hassan - Irrigation", "-\u20AA 450", "2 days ago", "", ""},
-                {"SALE", "\uD83D\uDCB5", "Sold Wheat", "1,000 kg to distributor", "+\u20AA 2,400", "3 days ago", "+12%", "up"},
-                {"PURCHASE", "\uD83D\uDED2", "Bought Seeds", "Wheat seeds for Field B-1", "-\u20AA 180", "4 days ago", "-1%", "down"},
-                {"PAYMENT", "\uD83D\uDCB3", "Worker Salary", "Mohammad Khaled - Harvest", "-\u20AA 640", "5 days ago", "", ""},
-                {"SALE", "\uD83D\uDCB5", "Sold Olives", "800 kg to olive press", "+\u20AA 3,200", "1 week ago", "+8%", "up"},
-                {"PURCHASE", "\uD83D\uDED2", "Equipment Repair", "Irrigation pump maintenance", "-\u20AA 550", "1 week ago", "-3%", "down"},
-                {"SALE", "\uD83D\uDCB5", "Sold Citrus", "1,200 kg to market", "+\u20AA 4,800", "2 weeks ago", "+15%", "up"},
-                {"PAYMENT", "\uD83D\uDCB3", "Worker Salary", "Sami Khalil - Plowing", "-\u20AA 500", "2 weeks ago", "", ""},
-        };
-
+        List<Transaction> transactions = TransactionService.getTransactionsByType(txFilter);
         VBox list = new VBox(12);
-        populateTransactions(list, data, txFilter, "");
+        populateTransactionsReal(list, transactions, "");
 
         searchField.textProperty().addListener((obs, o, n) ->
-                populateTransactions(list, data, txFilter, n.trim().toLowerCase()));
+                populateTransactionsReal(list, transactions, n.trim().toLowerCase()));
 
-        root.getChildren().addAll(stats, filterBar, list);
+        root.getChildren().addAll(stats, txToolbar, filterBar, list);
         return root;
     }
 
-    private void populateTransactions(VBox container, String[][] data, String filter, String query) {
+    private void showAddTransactionDialog() {
+        Dialog<ButtonType> dialog = new Dialog<>();
+        dialog.setTitle("Add New Transaction");
+        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+
+        VBox content = new VBox(10);
+        content.setPadding(new Insets(15));
+
+        ComboBox<String> typeBox = new ComboBox<>();
+        typeBox.getItems().addAll("SALE", "PURCHASE", "PAYMENT");
+        typeBox.setValue("SALE");
+        typeBox.setMaxWidth(Double.MAX_VALUE);
+
+        TextField amountField = new TextField();
+        amountField.setPromptText("Amount in NIS");
+
+        TextField descField = new TextField();
+        descField.setPromptText("Description (e.g. Sold 500kg tomatoes)");
+
+        Label workerLabel = new Label("Worker (for Payment)");
+        workerLabel.getStyleClass().add("mini-stat-label");
+        workerLabel.setStyle("-fx-font-size: 12px; -fx-font-weight: bold;");
+        ComboBox<com.smartfarm.model.FarmWorker> workerBox = new ComboBox<>();
+        workerBox.getItems().addAll(WorkerService.getAllWorkers());
+        workerBox.setConverter(new javafx.util.StringConverter<com.smartfarm.model.FarmWorker>() {
+            public String toString(com.smartfarm.model.FarmWorker w) { return w != null ? w.getUserName() : ""; }
+            public com.smartfarm.model.FarmWorker fromString(String s) { return null; }
+        });
+        workerBox.setMaxWidth(Double.MAX_VALUE);
+        workerLabel.setVisible(false); workerLabel.setManaged(false);
+        workerBox.setVisible(false); workerBox.setManaged(false);
+
+        typeBox.valueProperty().addListener((o, ov, nv) -> {
+            boolean isPayment = "PAYMENT".equals(nv);
+            workerLabel.setVisible(isPayment); workerLabel.setManaged(isPayment);
+            workerBox.setVisible(isPayment); workerBox.setManaged(isPayment);
+        });
+
+        Label errorLabel = new Label();
+        errorLabel.setStyle("-fx-text-fill: #D32F2F; -fx-font-size: 12px;");
+
+        content.getChildren().addAll(
+                new Label("Type"), typeBox,
+                new Label("Amount (NIS)"), amountField,
+                new Label("Description"), descField,
+                workerLabel, workerBox,
+                errorLabel);
+
+        dialog.getDialogPane().setContent(content);
+
+        Button okButton = (Button) dialog.getDialogPane().lookupButton(ButtonType.OK);
+        okButton.addEventFilter(javafx.event.ActionEvent.ACTION, event -> {
+            double amount;
+            try {
+                amount = Double.parseDouble(amountField.getText().trim());
+                if (amount <= 0) {
+                    errorLabel.setText("Amount must be greater than 0");
+                    event.consume();
+                    return;
+                }
+            } catch (Exception ex) {
+                errorLabel.setText("Amount must be a valid number");
+                event.consume();
+                return;
+            }
+
+            TransactionService.Result result;
+            switch (typeBox.getValue()) {
+                case "SALE":
+                    result = TransactionService.recordSale(amount, descField.getText(), null);
+                    break;
+                case "PAYMENT":
+                    if (workerBox.getValue() == null) {
+                        errorLabel.setText("Please select a worker");
+                        event.consume();
+                        return;
+                    }
+                    result = TransactionService.recordPayment(amount, descField.getText(), workerBox.getValue().getUserId());
+                    break;
+                case "PURCHASE":
+                default:
+                    result = TransactionService.recordPurchase(amount, descField.getText());
+                    break;
+            }
+
+            if (!result.success) {
+                errorLabel.setText(result.message);
+                event.consume();
+            }
+        });
+
+        Optional<ButtonType> resultBtn = dialog.showAndWait();
+        if (resultBtn.isPresent() && resultBtn.get() == ButtonType.OK) {
+            showTransactions();
+        }
+    }
+
+    private void populateTransactionsReal(VBox container, List<Transaction> data, String query) {
         container.getChildren().clear();
-        for (String[] d : data) {
-            if (!"ALL".equals(filter) && !d[0].equals(filter)) continue;
-            if (!query.isEmpty() && !(d[2] + " " + d[3]).toLowerCase().contains(query)) continue;
-            Label badge = new Label(d[0]);
-            badge.getStyleClass().addAll("badge", badgeClass(d[0]));
-            Label title = new Label(d[2]);
+        for (Transaction t : data) {
+            String desc = t.getDescription() != null ? t.getDescription() : "";
+            if (!query.isEmpty() && !desc.toLowerCase().contains(query)) continue;
+
+            Label badge = new Label(t.getType());
+            badge.getStyleClass().addAll("badge", badgeClass(t.getType()));
+            Label title = new Label(txIcon(t.getType()) + "  " + desc);
             title.getStyleClass().add("list-primary");
-            Label desc = new Label(d[3] + " \u2022 " + d[5]);
-            desc.getStyleClass().add("list-sub");
-            VBox txt = new VBox(2, title, desc);
+            Label dateLbl = new Label(formatRelativeDate(t.getTransactionDate()));
+            dateLbl.getStyleClass().add("list-sub");
+            VBox txt = new VBox(2, title, dateLbl);
             Region sp = new Region();
             HBox.setHgrow(sp, Priority.ALWAYS);
-            Label amount = new Label(d[4]);
-            amount.getStyleClass().add(d[4].startsWith("+") ? "pct-up" : "pct-down");
+            String sign = "SALE".equals(t.getType()) ? "+" : "-";
+            Label amount = new Label(String.format("%s\u20AA %,.0f", sign, t.getAmount()));
+            amount.getStyleClass().add("SALE".equals(t.getType()) ? "pct-up" : "pct-down");
             amount.setStyle("-fx-font-size: 15px; -fx-font-weight: bold;");
             VBox right = new VBox(4, amount);
             right.setAlignment(Pos.CENTER_RIGHT);
-            if (d[6] != null && !d[6].isEmpty()) {
-                Label pct = pill(d[6], "up".equals(d[7]));
-                right.getChildren().add(pct);
-            }
-            HBox row = new HBox(12, badge, txt, sp, right);
+
+            Button deleteBtn = new Button("\uD83D\uDDD1");
+            deleteBtn.getStyleClass().add("filter-btn");
+            deleteBtn.setStyle("-fx-text-fill: #D32F2F; -fx-font-size: 11px; -fx-padding: 4 8 4 8;");
+            int txId = t.getTransactionId();
+            deleteBtn.setOnAction(e -> {
+                Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+                alert.setTitle("Delete Transaction");
+                alert.setHeaderText("Delete this transaction?");
+                alert.setContentText("This cannot be undone.");
+                Optional<ButtonType> result = alert.showAndWait();
+                if (result.isPresent() && result.get() == ButtonType.OK) {
+                    TransactionService.deleteTransaction(txId);
+                    showTransactions();
+                }
+            });
+
+            HBox row = new HBox(12, badge, txt, sp, right, deleteBtn);
             row.setAlignment(Pos.CENTER_LEFT);
             row.getStyleClass().add("timeline-card");
             container.getChildren().add(row);
@@ -960,6 +1595,15 @@ public class DashboardController {
         }
     }
 
+    private String txIcon(String type) {
+        switch (type) {
+            case "SALE": return "\uD83D\uDCB5";
+            case "PURCHASE": return "\uD83D\uDED2";
+            case "PAYMENT": return "\uD83D\uDCB3";
+            default: return "\uD83D\uDCB0";
+        }
+    }
+
     @FXML private void showFertilizers() {
         setActive(btnFertilizers, "Fertilizers");
         setContent(buildFertilizers());
@@ -969,11 +1613,15 @@ public class DashboardController {
         VBox root = new VBox(18);
         root.getStyleClass().add("dash-root");
 
+        int totalItems = FarmService.getTotalItemsCount();
+        int lowStock = FarmService.getLowStockCount();
+        int inStock = totalItems - lowStock;
+
         GridPane stats = row(33.33, 33.33, 33.33);
         addCells(stats,
-                buildFieldStatCard("\uD83E\uDDEA", "12", "Total Items"),
-                buildFieldStatCard("\u2705", "9", "In Stock"),
-                buildFieldStatCard("\u26A0\uFE0F", "3", "Low Stock"));
+                buildFieldStatCard("\uD83E\uDDEA", String.valueOf(totalItems), "Total Items"),
+                buildFieldStatCard("\u2705", String.valueOf(inStock), "In Stock"),
+                buildFieldStatCard("\u26A0\uFE0F", String.valueOf(lowStock), "Low Stock"));
 
         HBox toolbar = new HBox(12);
         toolbar.setAlignment(Pos.CENTER_LEFT);
@@ -981,49 +1629,195 @@ public class DashboardController {
         searchField.setPromptText("\uD83D\uDD0D Search fertilizers...");
         searchField.getStyleClass().add("search-field");
         searchField.setPrefWidth(250);
-        toolbar.getChildren().add(searchField);
 
-        String[][] data = {
-                {"\uD83E\uDDEA", "NPK Fertilizer", "Fertilizer", "150 kg", "Field A-2", "Good", "3 days ago"},
-                {"\uD83E\uDDEA", "Urea", "Fertilizer", "80 kg", "Field B-1", "Good", "1 week ago"},
-                {"\uD83D\uDC8A", "Fungicide", "Medicine", "12 liters", "Field A-1", "Low", "2 weeks ago"},
-                {"\uD83E\uDDEA", "Potassium Sulfate", "Fertilizer", "200 kg", "Field C-1", "Good", "5 days ago"},
-                {"\uD83D\uDC8A", "Insecticide", "Medicine", "5 liters", "Field A-2", "Low", "3 weeks ago"},
-                {"\uD83E\uDDEA", "Compost", "Fertilizer", "500 kg", "All Fields", "Good", "1 week ago"},
-                {"\uD83D\uDC8A", "Herbicide", "Medicine", "8 liters", "Field B-1", "Low", "1 month ago"},
-                {"\uD83E\uDDEA", "Phosphate", "Fertilizer", "120 kg", "Field C-1", "Good", "2 days ago"},
-        };
+        Region fmSp = new Region();
+        HBox.setHgrow(fmSp, Priority.ALWAYS);
 
+        Button addItemBtn = new Button("\u2795  Add Item");
+        addItemBtn.getStyleClass().add("action-btn");
+        addItemBtn.setOnAction(e -> showAddFertilizerDialog());
+
+        toolbar.getChildren().addAll(searchField, fmSp, addItemBtn);
+
+        List<com.smartfarm.model.FertilizerMedicine> items = FarmService.getAllFertilizersAndMedicines();
         VBox list = new VBox(12);
-        populateFertilizers(list, data, "");
+        populateFertilizersReal(list, items, "");
 
-        searchField.textProperty().addListener((obs, o, n) -> populateFertilizers(list, data, n.trim().toLowerCase()));
+        searchField.textProperty().addListener((obs, o, n) -> populateFertilizersReal(list, items, n.trim().toLowerCase()));
 
         root.getChildren().addAll(stats, toolbar, list);
         return root;
     }
 
-    private void populateFertilizers(VBox container, String[][] data, String query) {
+    private void showAddFertilizerDialog() {
+        Dialog<ButtonType> dialog = new Dialog<>();
+        dialog.setTitle("Add Fertilizer or Medicine");
+        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+
+        VBox content = new VBox(10);
+        content.setPadding(new Insets(15));
+
+        List<com.smartfarm.model.Field> fields = FarmService.getAllFields();
+
+        Label fieldLabel = new Label("Field (optional \u2014 leave empty for whole farm)");
+        fieldLabel.getStyleClass().add("mini-stat-label");
+        fieldLabel.setStyle("-fx-font-size: 11px; -fx-font-weight: bold;");
+
+        ComboBox<com.smartfarm.model.Field> fieldBox = new ComboBox<>();
+        fieldBox.getItems().addAll(fields);
+        fieldBox.setConverter(new javafx.util.StringConverter<com.smartfarm.model.Field>() {
+            public String toString(com.smartfarm.model.Field f) { return f != null ? f.getName() : ""; }
+            public com.smartfarm.model.Field fromString(String s) { return null; }
+        });
+        fieldBox.setMaxWidth(Double.MAX_VALUE);
+
+        TextField nameField = new TextField();
+        nameField.setPromptText("Name (e.g. NPK Fertilizer)");
+
+        ComboBox<String> typeBox = new ComboBox<>();
+        typeBox.getItems().addAll("FERTILIZER", "MEDICINE");
+        typeBox.setValue("FERTILIZER");
+        typeBox.setMaxWidth(Double.MAX_VALUE);
+
+        TextField compositionField = new TextField();
+        compositionField.setPromptText("Composition (e.g. NPK 20-20-20)");
+
+        Label activeLabel = new Label("Active Ingredient (Medicine only)");
+        activeLabel.getStyleClass().add("mini-stat-label"); activeLabel.setStyle("-fx-font-size: 11px; -fx-font-weight: bold;");
+        TextField activeField = new TextField();
+        activeField.setPromptText("e.g. Copper hydroxide");
+
+        Label diseaseLabel = new Label("Target Disease/Pest (Medicine only)");
+        diseaseLabel.getStyleClass().add("mini-stat-label"); diseaseLabel.setStyle("-fx-font-size: 11px; -fx-font-weight: bold;");
+        TextField diseaseField = new TextField();
+        diseaseField.setPromptText("e.g. Olive leaf spot");
+
+        TextField quantityField = new TextField();
+        quantityField.setPromptText("Quantity");
+
+        ComboBox<String> unitBox = new ComboBox<>();
+        unitBox.getItems().addAll("kg/dunum", "kg/cup", "liter");
+        unitBox.setValue("kg/dunum");
+        unitBox.setMaxWidth(Double.MAX_VALUE);
+
+        CheckBox organicBox = new CheckBox("Organic");
+
+        TextField notesField = new TextField();
+        notesField.setPromptText("Notes (optional)");
+
+        Runnable toggleMedicineFields = () -> {
+            boolean isMedicine = "MEDICINE".equals(typeBox.getValue());
+            activeLabel.setVisible(isMedicine); activeLabel.setManaged(isMedicine);
+            activeField.setVisible(isMedicine); activeField.setManaged(isMedicine);
+            diseaseLabel.setVisible(isMedicine); diseaseLabel.setManaged(isMedicine);
+            diseaseField.setVisible(isMedicine); diseaseField.setManaged(isMedicine);
+            organicBox.setVisible(!isMedicine); organicBox.setManaged(!isMedicine);
+            unitBox.getItems().setAll(isMedicine ? new String[]{"liter"} : new String[]{"kg/dunum", "kg/cup"});
+            unitBox.setValue(unitBox.getItems().get(0));
+        };
+        typeBox.valueProperty().addListener((o, ov, nv) -> toggleMedicineFields.run());
+        toggleMedicineFields.run();
+
+        Label errorLabel = new Label();
+        errorLabel.setStyle("-fx-text-fill: #D32F2F; -fx-font-size: 12px;");
+
+        content.getChildren().addAll(
+                fieldLabel, fieldBox,
+                new Label("Name"), nameField,
+                new Label("Type"), typeBox,
+                new Label("Composition"), compositionField,
+                activeLabel, activeField,
+                diseaseLabel, diseaseField,
+                new Label("Quantity"), quantityField,
+                new Label("Unit"), unitBox,
+                organicBox,
+                new Label("Notes"), notesField,
+                errorLabel);
+
+        ScrollPane scrollPane = new ScrollPane(content);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setPrefHeight(420);
+        scrollPane.setStyle("-fx-background-color: transparent;");
+        dialog.getDialogPane().setContent(scrollPane);
+
+        Button okButton = (Button) dialog.getDialogPane().lookupButton(ButtonType.OK);
+        okButton.addEventFilter(javafx.event.ActionEvent.ACTION, event -> {
+            double quantity;
+            try {
+                quantity = Double.parseDouble(quantityField.getText().trim());
+                if (quantity <= 0) {
+                    errorLabel.setText("Quantity must be greater than 0");
+                    event.consume();
+                    return;
+                }
+            } catch (Exception ex) {
+                errorLabel.setText("Quantity must be a valid number");
+                event.consume();
+                return;
+            }
+
+            Integer fieldId = fieldBox.getValue() != null ? fieldBox.getValue().getFieldId() : null;
+
+            FarmService.Result result = FarmService.addFertilizerOrMedicine(
+                    fieldId, nameField.getText(), typeBox.getValue(), compositionField.getText(),
+                    activeField.getText(), diseaseField.getText(), quantity, unitBox.getValue(),
+                    organicBox.isSelected(), notesField.getText());
+
+            if (!result.success) {
+                errorLabel.setText(result.message);
+                event.consume();
+            }
+        });
+
+        Optional<ButtonType> resultBtn = dialog.showAndWait();
+        if (resultBtn.isPresent() && resultBtn.get() == ButtonType.OK) {
+            showFertilizers();
+        }
+    }
+
+    private void populateFertilizersReal(VBox container, List<com.smartfarm.model.FertilizerMedicine> data, String query) {
         container.getChildren().clear();
-        for (String[] d : data) {
-            if (!query.isEmpty() && !(d[1] + " " + d[2] + " " + d[4]).toLowerCase().contains(query)) continue;
-            Label ic = new Label(d[0]);
+        for (com.smartfarm.model.FertilizerMedicine fm : data) {
+            String fieldName = fm.getFieldName() != null ? fm.getFieldName() : "All Fields";
+            if (!query.isEmpty() && !(fm.getName() + " " + fm.getType() + " " + fieldName).toLowerCase().contains(query)) continue;
+
+            String icon = "FERTILIZER".equals(fm.getType()) ? "\uD83E\uDDEA" : "\uD83D\uDC8A";
+            Label ic = new Label(icon);
             ic.getStyleClass().add("row-icon");
-            Label name = new Label(d[1]);
+            Label name = new Label(fm.getName());
             name.getStyleClass().add("list-primary");
-            Label info = new Label(d[2] + " \u2022 " + d[4] + " \u2022 " + d[6]);
+            String typeLabel = fm.getType().charAt(0) + fm.getType().substring(1).toLowerCase();
+            String dateStr = formatRelativeDate(fm.getAppliedDate());
+            Label info = new Label(typeLabel + " \u2022 " + fieldName + " \u2022 " + dateStr);
             info.getStyleClass().add("list-sub");
             VBox txt = new VBox(2, name, info);
             Region sp = new Region();
             HBox.setHgrow(sp, Priority.ALWAYS);
-            Label qty = new Label(d[3]);
+            Label qty = new Label(String.format("%.0f %s", fm.getQuantity(), fm.getUnit()));
             qty.getStyleClass().add("mini-stat-value");
             qty.setStyle("-fx-font-size: 13px;");
-            Label stock = new Label(d[5]);
-            stock.getStyleClass().add("Good".equals(d[5]) ? "pill-up" : "pill-down");
+            Label stock = new Label(fm.isLowStock() ? "Low" : "Good");
+            stock.getStyleClass().add(fm.isLowStock() ? "pill-down" : "pill-up");
             VBox right = new VBox(4, qty, stock);
             right.setAlignment(Pos.CENTER_RIGHT);
-            HBox row = new HBox(12, ic, txt, sp, right);
+
+            Button deleteBtn = new Button("\uD83D\uDDD1");
+            deleteBtn.getStyleClass().add("filter-btn");
+            deleteBtn.setStyle("-fx-text-fill: #D32F2F; -fx-font-size: 11px; -fx-padding: 4 8 4 8;");
+            int fmId = fm.getFmId();
+            deleteBtn.setOnAction(e -> {
+                Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+                alert.setTitle("Delete Item");
+                alert.setHeaderText("Delete " + fm.getName() + "?");
+                alert.setContentText("This cannot be undone.");
+                Optional<ButtonType> result = alert.showAndWait();
+                if (result.isPresent() && result.get() == ButtonType.OK) {
+                    FarmService.deleteFertilizerOrMedicine(fmId);
+                    showFertilizers();
+                }
+            });
+
+            HBox row = new HBox(12, ic, txt, sp, right, deleteBtn);
             row.setAlignment(Pos.CENTER_LEFT);
             row.getStyleClass().add("timeline-card");
             container.getChildren().add(row);
@@ -1048,16 +1842,30 @@ public class DashboardController {
         Label subtitle = new Label("Farm Performance Overview");
         subtitle.getStyleClass().add("card-title");
 
+        int fieldsCount = FarmService.getTotalFieldsCount();
+        int workersCount = WorkerService.getTotalWorkersCount();
+        int harvestsCount = WorkerService.getTotalHarvestsCount();
+        List<Transaction> allTx = TransactionService.getAllTransactions();
+
         GridPane topRow = row(25, 25, 25, 25);
         addCells(topRow,
-                buildFieldStatCard("\uD83C\uDF3F", "6", "Fields"),
-                buildFieldStatCard("\uD83D\uDC77", "18", "Workers"),
-                buildFieldStatCard("\uD83C\uDF3E", "34", "Harvests"),
-                buildFieldStatCard("\uD83D\uDCB0", "23", "Transactions"));
+                buildFieldStatCard("\uD83C\uDF3F", String.valueOf(fieldsCount), "Fields"),
+                buildFieldStatCard("\uD83D\uDC77", String.valueOf(workersCount), "Workers"),
+                buildFieldStatCard("\uD83C\uDF3E", String.valueOf(harvestsCount), "Harvests"),
+                buildFieldStatCard("\uD83D\uDCB0", String.valueOf(allTx.size()), "Transactions"));
+
+        List<Harvest> allHarvests = WorkerService.getAllHarvests();
+        double totalGood = allHarvests.stream().mapToDouble(Harvest::getQuantityGood).sum();
+        double totalDamaged = allHarvests.stream().mapToDouble(Harvest::getQuantityDamaged).sum();
+        double quality = (totalGood + totalDamaged) > 0 ? (totalGood / (totalGood + totalDamaged)) * 100 : 100;
+
+        TransactionService.FinancialSummary summary = TransactionService.getFinancialSummary();
+        double budgetUsed = summary.revenue > 0 ? Math.min(100, (summary.expenses / summary.revenue) * 100) : 0;
 
         GridPane midRow = row(50, 50);
-        addCells(midRow, buildReportRingCard("Harvest Quality", 92, "ring-progress", "92%", "Quality"),
-                buildReportRingCard("Budget Usage", 67, "ring-purchases", "67%", "Used"));
+        addCells(midRow,
+                buildReportRingCard("Harvest Quality", quality, "ring-progress", String.format("%.0f%%", quality), "Quality"),
+                buildReportRingCard("Budget Usage", budgetUsed, "ring-purchases", String.format("%.0f%%", budgetUsed), "Used"));
 
         VBox cropTable = styledCard();
         cropTable.setSpacing(12);
@@ -1065,80 +1873,97 @@ public class DashboardController {
         tableTitle.getStyleClass().add("card-title");
         cropTable.getChildren().add(tableTitle);
 
-        String[][] crops = {
-                {"1", "\uD83C\uDF3E Barley", "4,100 kg", "22%"},
-                {"2", "\uD83C\uDF3E Wheat", "3,200 kg", "17%"},
-                {"3", "\uD83E\uDED2 Olives", "4,050 kg", "22%"},
-                {"4", "\uD83C\uDF4A Citrus", "2,800 kg", "15%"},
-                {"5", "\uD83C\uDF45 Tomatoes", "1,630 kg", "9%"},
-        };
+        java.util.Map<String, Double> cropTotals = new java.util.LinkedHashMap<>();
+        for (Harvest h : allHarvests) {
+            cropTotals.merge(h.getCropName(), h.getQuantityGood(), Double::sum);
+        }
+        double grandTotal = cropTotals.values().stream().mapToDouble(Double::doubleValue).sum();
 
-        for (String[] c : crops) {
-            Label rank = new Label(c[0]);
-            rank.getStyleClass().add("stat-icon");
-            rank.setStyle("-fx-font-size: 14px; -fx-min-width: 32; -fx-min-height: 32; -fx-max-width: 32; -fx-max-height: 32;");
-            Label cname = new Label(c[1]);
-            cname.getStyleClass().add("list-primary");
-            Region csp = new Region();
-            HBox.setHgrow(csp, Priority.ALWAYS);
-            Label cyield = new Label(c[2]);
-            cyield.getStyleClass().add("mini-stat-value");
-            cyield.setStyle("-fx-font-size: 13px;");
-            Label cpct = pill(c[3], true);
-            HBox crow = new HBox(12, rank, cname, csp, cyield, cpct);
-            crow.setAlignment(Pos.CENTER_LEFT);
-            cropTable.getChildren().add(crow);
+        List<java.util.Map.Entry<String, Double>> topCrops = cropTotals.entrySet().stream()
+                .sorted((a, b) -> Double.compare(b.getValue(), a.getValue()))
+                .limit(5)
+                .collect(java.util.stream.Collectors.toList());
+
+        if (topCrops.isEmpty()) {
+            Label empty = new Label("No harvest data yet");
+            empty.getStyleClass().add("card-sub");
+            cropTable.getChildren().add(empty);
+        } else {
+            int rank = 1;
+            for (java.util.Map.Entry<String, Double> entry : topCrops) {
+                double pct = grandTotal > 0 ? (entry.getValue() / grandTotal) * 100 : 0;
+
+                Label rankLbl = new Label(String.valueOf(rank));
+                rankLbl.getStyleClass().add("stat-icon");
+                rankLbl.setStyle("-fx-font-size: 14px; -fx-min-width: 32; -fx-min-height: 32; -fx-max-width: 32; -fx-max-height: 32;");
+                Label cname = new Label(cropIcon(entry.getKey()) + " " + entry.getKey());
+                cname.getStyleClass().add("list-primary");
+                Region csp = new Region();
+                HBox.setHgrow(csp, Priority.ALWAYS);
+                Label cyield = new Label(String.format("%,.0f kg", entry.getValue()));
+                cyield.getStyleClass().add("mini-stat-value");
+                cyield.setStyle("-fx-font-size: 13px;");
+                Label cpct = pill(String.format("%.0f%%", pct), true);
+                HBox crow = new HBox(12, rankLbl, cname, csp, cyield, cpct);
+                crow.setAlignment(Pos.CENTER_LEFT);
+                cropTable.getChildren().add(crow);
+                rank++;
+            }
         }
 
         GridPane finRow = row(50, 50);
         VBox revenueCard = styledCard();
         revenueCard.setSpacing(10);
-        Label revTitle = new Label("\uD83D\uDCB5 Revenue Breakdown");
+        Label revTitle = new Label("\uD83D\uDCB5 Recent Revenue");
         revTitle.getStyleClass().add("card-title");
         revenueCard.getChildren().add(revTitle);
 
-        String[][] rev = {
-                {"Tomatoes", "\u20AA 1,200", "up"},
-                {"Wheat", "\u20AA 2,400", "up"},
-                {"Olives", "\u20AA 3,200", "up"},
-                {"Citrus", "\u20AA 4,800", "up"},
-        };
-        for (String[] r : rev) {
-            Label rname = new Label(r[0]);
-            rname.getStyleClass().add("list-primary");
-            Region rsp = new Region();
-            HBox.setHgrow(rsp, Priority.ALWAYS);
-            Label ramt = new Label(r[1]);
-            ramt.getStyleClass().add("pct-up");
-            ramt.setStyle("-fx-font-size: 13px;");
-            HBox rrow = new HBox(8, rname, rsp, ramt);
-            rrow.setAlignment(Pos.CENTER_LEFT);
-            revenueCard.getChildren().add(rrow);
+        List<Transaction> sales = allTx.stream().filter(t -> "SALE".equals(t.getType())).limit(5).collect(java.util.stream.Collectors.toList());
+        if (sales.isEmpty()) {
+            Label empty = new Label("No sales recorded yet");
+            empty.getStyleClass().add("card-sub");
+            revenueCard.getChildren().add(empty);
+        } else {
+            for (Transaction t : sales) {
+                Label rname = new Label(t.getDescription() != null ? t.getDescription() : "Sale");
+                rname.getStyleClass().add("list-primary");
+                Region rsp = new Region();
+                HBox.setHgrow(rsp, Priority.ALWAYS);
+                Label ramt = new Label(String.format("\u20AA %,.0f", t.getAmount()));
+                ramt.getStyleClass().add("pct-up");
+                ramt.setStyle("-fx-font-size: 13px;");
+                HBox rrow = new HBox(8, rname, rsp, ramt);
+                rrow.setAlignment(Pos.CENTER_LEFT);
+                revenueCard.getChildren().add(rrow);
+            }
         }
 
         VBox expenseCard = styledCard();
         expenseCard.setSpacing(10);
-        Label expTitle = new Label("\uD83D\uDED2 Expense Breakdown");
+        Label expTitle = new Label("\uD83D\uDED2 Recent Expenses");
         expTitle.getStyleClass().add("card-title");
         expenseCard.getChildren().add(expTitle);
 
-        String[][] exp = {
-                {"Fertilizers", "\u20AA 520", "down"},
-                {"Seeds", "\u20AA 180", "down"},
-                {"Equipment", "\u20AA 550", "down"},
-                {"Salaries", "\u20AA 1,590", "down"},
-        };
-        for (String[] x : exp) {
-            Label xname = new Label(x[0]);
-            xname.getStyleClass().add("list-primary");
-            Region xsp = new Region();
-            HBox.setHgrow(xsp, Priority.ALWAYS);
-            Label xamt = new Label(x[1]);
-            xamt.getStyleClass().add("pct-down");
-            xamt.setStyle("-fx-font-size: 13px;");
-            HBox xrow = new HBox(8, xname, xsp, xamt);
-            xrow.setAlignment(Pos.CENTER_LEFT);
-            expenseCard.getChildren().add(xrow);
+        List<Transaction> expenses = allTx.stream()
+                .filter(t -> "PURCHASE".equals(t.getType()) || "PAYMENT".equals(t.getType()))
+                .limit(5).collect(java.util.stream.Collectors.toList());
+        if (expenses.isEmpty()) {
+            Label empty = new Label("No expenses recorded yet");
+            empty.getStyleClass().add("card-sub");
+            expenseCard.getChildren().add(empty);
+        } else {
+            for (Transaction t : expenses) {
+                Label xname = new Label(t.getDescription() != null ? t.getDescription() : t.getType());
+                xname.getStyleClass().add("list-primary");
+                Region xsp = new Region();
+                HBox.setHgrow(xsp, Priority.ALWAYS);
+                Label xamt = new Label(String.format("\u20AA %,.0f", t.getAmount()));
+                xamt.getStyleClass().add("pct-down");
+                xamt.setStyle("-fx-font-size: 13px;");
+                HBox xrow = new HBox(8, xname, xsp, xamt);
+                xrow.setAlignment(Pos.CENTER_LEFT);
+                expenseCard.getChildren().add(xrow);
+            }
         }
 
         addCells(finRow, revenueCard, expenseCard);
@@ -1182,12 +2007,20 @@ public class DashboardController {
             profileGrid.getColumnConstraints().add(cc);
         }
 
-        TextField nameField = settingsField("Mohammad Fares");
-        TextField emailFieldS = settingsField("manager@smartfarm.ps");
-        TextField phoneField = settingsField("+970 599 123 456");
+        com.smartfarm.model.User adminUser = com.smartfarm.service.AuthService.getUserById(SessionManager.getUserId());
+        String currentName = adminUser != null && adminUser.getName() != null ? adminUser.getName() : SessionManager.getUserName();
+        String currentEmail = adminUser != null && adminUser.getEmail() != null ? adminUser.getEmail() : "";
+        String currentPhone = adminUser != null && adminUser.getPhone() != null ? adminUser.getPhone() : "";
+
+        TextField nameField = settingsField(currentName);
+        TextField emailFieldS = settingsField(currentEmail);
+        TextField phoneField = settingsField(currentPhone);
         TextField roleField = settingsField("\uD83D\uDD12 Admin");
         roleField.setEditable(false);
         roleField.setDisable(true);
+
+        Label settingsMsg = new Label("");
+        settingsMsg.getStyleClass().add("card-sub");
 
         profileGrid.add(settingsLabel("Full Name"), 0, 0);
         profileGrid.add(nameField, 0, 1);
@@ -1201,17 +2034,26 @@ public class DashboardController {
         Button saveBtn = new Button("\uD83D\uDCBE  Save Changes");
         saveBtn.getStyleClass().add("action-btn");
         saveBtn.setOnAction(e -> {
-            saveBtn.setText("\u2714  Saved!");
-            saveBtn.setStyle("-fx-background-color: #1B5E20;");
-            PauseTransition p = new PauseTransition(Duration.millis(1500));
-            p.setOnFinished(ev -> {
-                saveBtn.setText("\uD83D\uDCBE  Save Changes");
-                saveBtn.setStyle("");
-            });
-            p.play();
+            com.smartfarm.service.AuthService.AuthResult result = com.smartfarm.service.AuthService.updateProfile(
+                    SessionManager.getUserId(), nameField.getText(), emailFieldS.getText(), phoneField.getText());
+            settingsMsg.setText(result.message);
+            if (result.success) {
+                SessionManager.login(SessionManager.getUserId(), nameField.getText().trim(), true);
+                if (userName != null) {
+                    userName.setText(nameField.getText().trim());
+                }
+                saveBtn.setText("\u2714  Saved!");
+                saveBtn.setStyle("-fx-background-color: #1B5E20;");
+                PauseTransition p = new PauseTransition(Duration.millis(1500));
+                p.setOnFinished(ev -> {
+                    saveBtn.setText("\uD83D\uDCBE  Save Changes");
+                    saveBtn.setStyle("");
+                });
+                p.play();
+            }
         });
 
-        profileCard.getChildren().addAll(profileTitle, profileGrid, saveBtn);
+        profileCard.getChildren().addAll(profileTitle, profileGrid, settingsMsg, saveBtn);
 
         VBox themeCard = styledCard();
         themeCard.setSpacing(14);
@@ -1264,6 +2106,15 @@ public class DashboardController {
 
     private String historyFilter = "ALL";
 
+    private static class TimelineEntry {
+        String type, icon, title, desc, value, direction;
+        java.time.LocalDate date;
+        TimelineEntry(String type, String icon, String title, String desc, java.time.LocalDate date, String value, String direction) {
+            this.type = type; this.icon = icon; this.title = title; this.desc = desc;
+            this.date = date; this.value = value; this.direction = direction;
+        }
+    }
+
     private Node buildHistory() {
         VBox root = new VBox(16);
         root.getStyleClass().add("dash-root");
@@ -1271,9 +2122,9 @@ public class DashboardController {
         HBox filterBar = new HBox(8);
         filterBar.setAlignment(Pos.CENTER_LEFT);
 
-        String[] filters = {"All", "Harvest", "Transaction", "Worker", "Field"};
-        String[] filterKeys = {"ALL", "HARVEST", "TRANSACTION", "WORKER", "FIELD"};
-        String[] filterIcons = {"\uD83D\uDCCB", "\uD83C\uDF3E", "\uD83D\uDCB0", "\uD83D\uDC77", "\uD83C\uDF31"};
+        String[] filters = {"All", "Harvest", "Transaction", "Field Activity"};
+        String[] filterKeys = {"ALL", "HARVEST", "TRANSACTION", "FIELD"};
+        String[] filterIcons = {"\uD83D\uDCCB", "\uD83C\uDF3E", "\uD83D\uDCB0", "\uD83C\uDF31"};
 
         for (int i = 0; i < filters.length; i++) {
             Button fb = new Button(filterIcons[i] + "  " + filters[i]);
@@ -1300,28 +2151,64 @@ public class DashboardController {
         VBox timeline = new VBox(0);
         timeline.getStyleClass().add("timeline-container");
 
-        String[][] activities = {
-                {"HARVEST", "\uD83C\uDF45", "Harvested Tomatoes", "850 kg collected from Field A-2", "Today, 10:30 AM", "+850 kg", "up"},
-                {"TRANSACTION", "\uD83D\uDCB0", "Sale Completed", "Sold 500 kg tomatoes to Market", "Today, 09:15 AM", "+\u20AA 1,200", "up"},
-                {"WORKER", "\uD83D\uDC77", "Worker Assigned", "Ahmad joined Field B-1 as irrigator", "Yesterday, 04:00 PM", "", ""},
-                {"FIELD", "\uD83C\uDF31", "New Field Added", "Field C-3 registered (5 dunums)", "Yesterday, 02:30 PM", "+5 dunums", "up"},
-                {"HARVEST", "\uD83C\uDF3E", "Harvested Wheat", "3,200 kg collected from Field B-1", "2 days ago, 11:00 AM", "+3,200 kg", "up"},
-                {"TRANSACTION", "\uD83D\uDCB0", "Purchase Made", "Bought fertilizer for Field A-2", "2 days ago, 09:00 AM", "-\u20AA 320", "down"},
-                {"WORKER", "\uD83D\uDC77", "Worker Removed", "Khaled left Field A-1", "3 days ago, 05:00 PM", "", ""},
-                {"TRANSACTION", "\uD83D\uDCB0", "Payment Sent", "Worker salary payment", "3 days ago, 03:00 PM", "-\u20AA 450", "down"},
-                {"HARVEST", "\uD83E\uDED2", "Harvested Olives", "1,150 kg collected from Field D-1", "5 days ago, 08:00 AM", "+1,150 kg", "up"},
-                {"FIELD", "\uD83C\uDF31", "Field Updated", "Field A-1 soil status changed to Good", "5 days ago, 07:30 AM", "", ""},
-                {"TRANSACTION", "\uD83D\uDCB0", "Sale Completed", "Sold 1,000 kg wheat to distributor", "1 week ago, 10:00 AM", "+\u20AA 2,400", "up"},
-                {"HARVEST", "\uD83C\uDF3E", "Harvested Cucumbers", "620 kg collected from Field C-1", "1 week ago, 09:00 AM", "+620 kg", "up"},
-        };
+        List<TimelineEntry> entries = new java.util.ArrayList<>();
+
+        for (Harvest h : WorkerService.getAllHarvests()) {
+            String desc = String.format("%.0f %s collected from %s by %s", h.getQuantityGood(), h.getUnit(), h.getFieldName(), h.getWorkerName());
+            String value = String.format("+%.0f %s", h.getQuantityGood(), h.getUnit());
+            entries.add(new TimelineEntry("HARVEST", cropIcon(h.getCropName()), "Harvested " + h.getCropName(), desc, h.getHarvestDate(), value, "up"));
+        }
+
+        for (Transaction t : TransactionService.getAllTransactions()) {
+            String title = "SALE".equals(t.getType()) ? "Sale Completed" : "PURCHASE".equals(t.getType()) ? "Purchase Made" : "Payment Sent";
+            String sign = "SALE".equals(t.getType()) ? "+" : "-";
+            String value = String.format("%s\u20AA %,.0f", sign, t.getAmount());
+            String dir = "SALE".equals(t.getType()) ? "up" : "down";
+            entries.add(new TimelineEntry("TRANSACTION", txIcon(t.getType()), title,
+                    t.getDescription() != null ? t.getDescription() : "", t.getTransactionDate(), value, dir));
+        }
+
+        for (com.smartfarm.model.FarmLog log : FarmService.getAllLogs()) {
+            String title;
+            switch (log.getLogType()) {
+                case "IRRIGATION": title = "Irrigation Performed"; break;
+                case "PLOWING": title = "Field Plowed"; break;
+                case "PLANTING": title = "Planting Completed"; break;
+                case "FERTILIZING": title = "Fertilizer Applied"; break;
+                default: title = "Note Added"; break;
+            }
+            String desc = log.getFieldName() + " \u2022 " + log.getWorkerName()
+                    + (log.getDescription() != null && !log.getDescription().isEmpty() ? " \u2022 " + log.getDescription() : "");
+            String value = log.getQuantity() != null ? String.format("%.0f", log.getQuantity()) : "";
+            entries.add(new TimelineEntry("FIELD", "\uD83C\uDF31", title, desc, log.getLogDate(), value, "up"));
+        }
+
+        entries.sort((a, b) -> {
+            if (a.date == null) return 1;
+            if (b.date == null) return -1;
+            return b.date.compareTo(a.date);
+        });
 
         int count = 0;
-        for (int i = 0; i < activities.length; i++) {
-            String[] a = activities[i];
-            if (!historyFilter.equals("ALL") && !a[0].equals(historyFilter)) continue;
+        List<TimelineEntry> filtered = new java.util.ArrayList<>();
+        for (TimelineEntry e : entries) {
+            if (!historyFilter.equals("ALL") && !e.type.equals(historyFilter)) continue;
+            filtered.add(e);
+        }
+
+        for (int i = 0; i < filtered.size(); i++) {
+            TimelineEntry e = filtered.get(i);
             count++;
-            boolean isLast = (i == activities.length - 1);
-            timeline.getChildren().add(buildTimelineItem(a[0], a[1], a[2], a[3], a[4], a[5], a[6], isLast));
+            boolean isLast = (i == filtered.size() - 1);
+            timeline.getChildren().add(buildTimelineItem(e.type, e.icon, e.title, e.desc,
+                    formatRelativeDate(e.date), e.value, e.direction, isLast));
+        }
+
+        if (filtered.isEmpty()) {
+            Label empty = new Label("No activity recorded yet");
+            empty.getStyleClass().add("card-sub");
+            empty.setStyle("-fx-padding: 30 0 30 0; -fx-font-size: 14px;");
+            timeline.getChildren().add(empty);
         }
 
         countLabel.setText(count + " activities");
@@ -1409,6 +2296,7 @@ public class DashboardController {
         Optional<ButtonType> result = alert.showAndWait();
 
         if (result.isPresent() && result.get() == ButtonType.OK) {
+            com.smartfarm.service.AuthService.logout();
             stage = (Stage) btnQuit.getScene().getWindow();
             SceneSwitcher.switchTo(stage, "/fxml/login.fxml");
         }

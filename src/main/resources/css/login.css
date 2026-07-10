@@ -2,6 +2,15 @@
     -fx-padding: 0;
 }
 
+.root-pane {
+    -fx-background-color: #FFFFFF;
+    -fx-padding: 0;
+}
+
+.dark-mode.root-pane {
+    -fx-background-color: #1E1E1E;
+}
+
 .left-panel {
     -fx-background-color: #FFFFFF;
     -fx-background-radius: 0;
@@ -54,6 +63,24 @@
     -fx-background-color: transparent;
 }
 
+.code-box {
+    -fx-font-size: 22px;
+    -fx-font-weight: bold;
+    -fx-alignment: center;
+    -fx-background-color: #F5F7F5;
+    -fx-background-radius: 10px;
+    -fx-border-color: #DDDDDD;
+    -fx-border-radius: 10px;
+    -fx-border-width: 1px;
+    -fx-text-fill: #2E7D32;
+}
+
+.code-box:focused {
+    -fx-border-color: #2E7D32;
+    -fx-border-width: 2px;
+    -fx-background-color: #FFFFFF;
+}
+
 .login-btn {
     -fx-background-color: #2E7D32;
     -fx-text-fill: #FFFFFF;
@@ -87,10 +114,6 @@
 .forgot-link {
     -fx-text-fill: #2E7D32;
     -fx-font-size: 11px;
-}
-
-.dark-mode .forgot-link {
-    -fx-text-fill: #81C784;
 }
 
 .right-title {
@@ -134,6 +157,7 @@
     -fx-font-family: "Arial";
 }
 
+/* --- Dark Mode Styles --- */
 .dark-mode {
     -fx-background-color: #1E1E1E;
 }
@@ -173,10 +197,25 @@
     -fx-text-fill: #AAAAAA;
 }
 
+.dark-mode .forgot-link {
+    -fx-text-fill: #81C784;
+}
+
 .dark-mode .right-title {
     -fx-text-fill: #CCCCCC;
 }
 
 .dark-mode .right-subtitle {
     -fx-text-fill: #888888;
+}
+
+.dark-mode .code-box {
+    -fx-background-color: #2D2D2D;
+    -fx-border-color: #444444;
+    -fx-text-fill: #81C784;
+}
+
+.dark-mode .code-box:focused {
+    -fx-border-color: #81C784;
+    -fx-background-color: #383838;
 }

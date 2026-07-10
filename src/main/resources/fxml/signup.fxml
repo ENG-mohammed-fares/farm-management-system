@@ -8,7 +8,7 @@
 <AnchorPane xmlns="http://javafx.com/javafx"
             xmlns:fx="http://javafx.com/fxml"
             fx:controller="com.smartfarm.controller.SignUpController"
-            prefWidth="900" prefHeight="600"
+            prefWidth="1100" prefHeight="650"
             stylesheets="@../css/signup.css">
 
     <Pane fx:id="bgPane"
@@ -55,18 +55,54 @@
                        promptText="Enter your full name"
                        styleClass="input-field"/>
 
-            <Label text="Email or Phone" styleClass="field-label"/>
-            <HBox styleClass="input-wrapper" alignment="CENTER_LEFT" spacing="8">
-                <ImageView fitWidth="18" fitHeight="18" preserveRatio="true">
-                    <image>
-                        <Image url="@../images/email_icon.png"/>
-                    </image>
-                </ImageView>
-                <TextField fx:id="emailField"
-                           promptText="Enter your email or phone"
-                           styleClass="input-field-flat"
-                           HBox.hgrow="ALWAYS"/>
+            <HBox alignment="CENTER_LEFT" spacing="10" styleClass="contact-toggle-box">
+                <Label fx:id="emailToggleTab" text="Email"
+                       style="-fx-font-size: 12px; -fx-font-weight: bold; -fx-text-fill: #2E7D32; -fx-background-color: #E8F5E9; -fx-padding: 5 14 5 14; -fx-background-radius: 14; -fx-cursor: hand;"
+                       onMouseClicked="#handleShowEmailField"/>
+                <Label fx:id="phoneToggleTab" text="Phone"
+                       style="-fx-font-size: 12px; -fx-font-weight: bold; -fx-text-fill: #999999; -fx-background-color: transparent; -fx-padding: 5 14 5 14; -fx-background-radius: 14; -fx-cursor: hand;"
+                       onMouseClicked="#handleShowPhoneField"/>
             </HBox>
+
+            <StackPane>
+                <HBox fx:id="emailInputBox" styleClass="input-wrapper" alignment="CENTER_LEFT" spacing="8">
+                    <ImageView fitWidth="18" fitHeight="18" preserveRatio="true">
+                        <image>
+                            <Image url="@../images/email_icon.png"/>
+                        </image>
+                    </ImageView>
+                    <TextField fx:id="emailField"
+                               promptText="Enter your email"
+                               styleClass="input-field-flat"
+                               HBox.hgrow="ALWAYS"/>
+                </HBox>
+
+                <GridPane fx:id="phoneInputBox" hgap="6" visible="false" managed="false">
+                    <columnConstraints>
+                        <ColumnConstraints percentWidth="32"/>
+                        <ColumnConstraints percentWidth="68"/>
+                    </columnConstraints>
+                    <HBox styleClass="input-wrapper" alignment="CENTER" GridPane.columnIndex="0" spacing="6">
+                        <ImageView fx:id="flagImage" fitWidth="28" fitHeight="20" preserveRatio="true" smooth="true">
+                            <image>
+                                <Image url="@../images/flags/ps.png"/>
+                            </image>
+                        </ImageView>
+                        <TextField fx:id="countryCodeField"
+                                   promptText="+970"
+                                   styleClass="input-field-flat"
+                                   alignment="CENTER"
+                                   maxWidth="Infinity"
+                                   HBox.hgrow="ALWAYS"/>
+                    </HBox>
+                    <HBox styleClass="input-wrapper" alignment="CENTER_LEFT" spacing="8" GridPane.columnIndex="1">
+                        <TextField fx:id="phoneNumberField"
+                                   promptText="599123456"
+                                   styleClass="input-field-flat"
+                                   HBox.hgrow="ALWAYS"/>
+                    </HBox>
+                </GridPane>
+            </StackPane>
 
             <Label text="Password" styleClass="field-label"/>
             <HBox styleClass="input-wrapper" alignment="CENTER_LEFT" spacing="8">

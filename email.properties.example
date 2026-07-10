@@ -1,0 +1,5 @@
+# Copy this file to config/email.properties and fill in your values.
+# Do NOT commit config/email.properties — it contains secrets.
+
+email.from=your.email@gmail.com
+email.appPassword=your-gmail-app-password
