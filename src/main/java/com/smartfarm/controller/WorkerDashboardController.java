@@ -2,6 +2,7 @@ package com.smartfarm.controller;
 
 import java.time.LocalDate;
 import java.time.YearMonth;
+import java.util.Locale;
 import java.util.Optional;
 
 import javafx.animation.FadeTransition;
@@ -41,6 +42,7 @@ import com.smartfarm.service.WorkerService;
 import com.smartfarm.service.FarmService;
 import com.smartfarm.service.TransactionService;
 import com.smartfarm.model.FarmWorker;
+import com.smartfarm.model.FarmLog;
 import com.smartfarm.model.Harvest;
 import com.smartfarm.model.Field;
 import com.smartfarm.model.Crop;
@@ -167,7 +169,7 @@ public class WorkerDashboardController {
         profileCard.setSpacing(14);
         Label avatar = new Label(getInitials(SessionManager.getUserName())); avatar.getStyleClass().add("avatar");
         Label name = new Label(SessionManager.getUserName()); name.getStyleClass().add("card-title");
-        String jobLabel = worker != null ? capitalize(worker.getJobType()) + "  |  " + String.format("\u20AA%.0f/%s", worker.getWagePerUnit(), worker.getWageUnit()) : "N/A";
+        String jobLabel = worker != null ? capitalize(worker.getJobType()) + "  |  " + String.format(Locale.US, "\u20AA%.0f/%s", worker.getWagePerUnit(), worker.getWageUnit()) : "N/A";
         Label role = new Label(jobLabel); role.getStyleClass().add("card-sub");
         VBox nameBox = new VBox(2, name, role); nameBox.setAlignment(Pos.CENTER_LEFT);
         HBox head = new HBox(12, avatar, nameBox); head.setAlignment(Pos.CENTER_LEFT);
@@ -177,43 +179,74 @@ public class WorkerDashboardController {
         HBox headRow = new HBox(head, sp, statusL); headRow.setAlignment(Pos.CENTER_LEFT);
         profileCard.getChildren().add(headRow);
 
-        List<Harvest> myHarvests = WorkerService.getHarvestsByWorker(fwId);
-        double thisMonthQty = myHarvests.stream()
-                .filter(h -> h.getHarvestDate() != null && h.getHarvestDate().getMonth() == java.time.LocalDate.now().getMonth()
-                        && h.getHarvestDate().getYear() == java.time.LocalDate.now().getYear())
-                .mapToDouble(Harvest::getQuantityGood).sum();
-
-        GridPane stats = row(25, 25, 25, 25);
-        addCells(stats,
-                statCard("kg", String.format("%,.0f", thisMonthQty), "This Month"),
-                statCard("NIS", String.format("%,.0f", earnings.totalEarned), "Earned"),
-                statCard("NIS", String.format("%,.0f", totalReceived), "Received"),
-                statCard("NIS", String.format("%,.0f", remaining), "Remaining"));
-
+        String jobType = worker != null ? worker.getJobType() : "HARVESTER";
+        String qtyUnit = worker != null && worker.getWageUnit() != null ? worker.getWageUnit() : "kg";
+        double thisMonthQty;
         VBox recentCard = card();
         recentCard.setSpacing(12);
         Label recentTitle = new Label("Recent Activity"); recentTitle.getStyleClass().add("card-title");
         recentCard.getChildren().add(recentTitle);
 
-        int limit = Math.min(3, myHarvests.size());
-        if (limit == 0) {
-            Label empty = new Label("No activity yet"); empty.getStyleClass().add("card-sub");
-            recentCard.getChildren().add(empty);
+        if ("IRRIGATOR".equals(jobType) || "PLOWER".equals(jobType)) {
+            List<FarmLog> myLogs = WorkerService.getLogsByWorker(fwId);
+            thisMonthQty = myLogs.stream()
+                    .filter(l -> l.getLogDate() != null
+                            && l.getLogDate().getMonth() == LocalDate.now().getMonth()
+                            && l.getLogDate().getYear() == LocalDate.now().getYear())
+                    .mapToDouble(l -> l.getQuantity() != null ? l.getQuantity() : 0)
+                    .sum();
+            int limit = Math.min(3, myLogs.size());
+            if (limit == 0) {
+                Label empty = new Label("No activity yet"); empty.getStyleClass().add("card-sub");
+                recentCard.getChildren().add(empty);
+            } else {
+                for (int i = 0; i < limit; i++) {
+                    FarmLog log = myLogs.get(i);
+                    Label primary = new Label(capitalize(log.getLogType())); primary.getStyleClass().add("list-primary");
+                    Label info = new Label(log.getFieldName() + " | " + formatRelativeDate(log.getLogDate())); info.getStyleClass().add("list-sub");
+                    VBox txt = new VBox(2, primary, info);
+                    Region s2 = new Region(); HBox.setHgrow(s2, Priority.ALWAYS);
+                    double qtyVal = log.getQuantity() != null ? log.getQuantity() : 0;
+                    Label qty = new Label(String.format(Locale.US, "%.0f %s", qtyVal, qtyUnit)); qty.getStyleClass().add("mini-stat-value"); qty.setStyle("-fx-font-size: 13px;");
+                    VBox right = new VBox(3, qty); right.setAlignment(Pos.CENTER_RIGHT);
+                    HBox rw = new HBox(12, txt, s2, right); rw.setAlignment(Pos.CENTER_LEFT);
+                    rw.getStyleClass().add("timeline-card");
+                    recentCard.getChildren().add(rw);
+                }
+            }
         } else {
-            for (int i = 0; i < limit; i++) {
-                Harvest h = myHarvests.get(i);
-                Label cr = new Label(h.getCropName()); cr.getStyleClass().add("list-primary");
-                Label info = new Label(h.getFieldName() + " | " + formatRelativeDate(h.getHarvestDate())); info.getStyleClass().add("list-sub");
-                VBox txt = new VBox(2, cr, info);
-                Region s2 = new Region(); HBox.setHgrow(s2, Priority.ALWAYS);
-                Label qty = new Label(String.format("%.0f %s", h.getQuantityGood(), h.getUnit())); qty.getStyleClass().add("mini-stat-value"); qty.setStyle("-fx-font-size: 13px;");
-                VBox right = new VBox(3, qty); right.setAlignment(Pos.CENTER_RIGHT);
-                HBox rw = new HBox(12, txt, s2, right); rw.setAlignment(Pos.CENTER_LEFT);
-                rw.getStyleClass().add("timeline-card");
-                recentCard.getChildren().add(rw);
+            List<Harvest> myHarvests = WorkerService.getHarvestsByWorker(fwId);
+            thisMonthQty = myHarvests.stream()
+                    .filter(h -> h.getHarvestDate() != null && h.getHarvestDate().getMonth() == LocalDate.now().getMonth()
+                            && h.getHarvestDate().getYear() == LocalDate.now().getYear())
+                    .mapToDouble(Harvest::getQuantityGood).sum();
+            int limit = Math.min(3, myHarvests.size());
+            if (limit == 0) {
+                Label empty = new Label("No activity yet"); empty.getStyleClass().add("card-sub");
+                recentCard.getChildren().add(empty);
+            } else {
+                for (int i = 0; i < limit; i++) {
+                    Harvest h = myHarvests.get(i);
+                    Label cr = new Label(h.getCropName()); cr.getStyleClass().add("list-primary");
+                    Label info = new Label(h.getFieldName() + " | " + formatRelativeDate(h.getHarvestDate())); info.getStyleClass().add("list-sub");
+                    VBox txt = new VBox(2, cr, info);
+                    Region s2 = new Region(); HBox.setHgrow(s2, Priority.ALWAYS);
+                    Label qty = new Label(String.format(Locale.US, "%.0f %s", h.getQuantityGood(), h.getUnit())); qty.getStyleClass().add("mini-stat-value"); qty.setStyle("-fx-font-size: 13px;");
+                    VBox right = new VBox(3, qty); right.setAlignment(Pos.CENTER_RIGHT);
+                    HBox rw = new HBox(12, txt, s2, right); rw.setAlignment(Pos.CENTER_LEFT);
+                    rw.getStyleClass().add("timeline-card");
+                    recentCard.getChildren().add(rw);
+                }
             }
         }
         recentCard.setPrefHeight(220);
+
+        GridPane stats = row(25, 25, 25, 25);
+        addCells(stats,
+                statCard(qtyUnit, String.format(Locale.US, "%,.0f", thisMonthQty), "This Month"),
+                statCard("NIS", String.format(Locale.US, "%,.0f", earnings.totalEarned), "Earned"),
+                statCard("NIS", String.format(Locale.US, "%,.0f", totalReceived), "Received"),
+                statCard("NIS", String.format(Locale.US, "%,.0f", remaining), "Remaining"));
 
         double paidPct = earnings.totalEarned > 0 ? (totalReceived / earnings.totalEarned) * 100 : 0;
         if (paidPct > 100) paidPct = 100;
@@ -227,7 +260,7 @@ public class WorkerDashboardController {
         Arc arc = new Arc(c, c, r2, r2, 90, -paidPct * 3.6); arc.setType(ArcType.OPEN); arc.setFill(Color.TRANSPARENT);
         arc.getStyleClass().add("ring-progress"); arc.setStrokeWidth(14); arc.setStrokeLineCap(StrokeLineCap.ROUND);
         Pane ring = new Pane(track, arc); ring.setMinSize(120, 120); ring.setPrefSize(120, 120); ring.setMaxSize(120, 120);
-        Label pctL = new Label(String.format("%.0f%%", paidPct)); pctL.getStyleClass().add("ring-center");
+        Label pctL = new Label(String.format(Locale.US, "%.0f%%", paidPct)); pctL.getStyleClass().add("ring-center");
         Label pctS = new Label("Paid"); pctS.getStyleClass().add("ring-center-sub");
         VBox ctr = new VBox(pctL, pctS); ctr.setAlignment(Pos.CENTER);
         StackPane ringStack = new StackPane(ring, ctr); ringStack.setMinSize(120, 120); ringStack.setMaxSize(120, 120);
@@ -272,15 +305,22 @@ public class WorkerDashboardController {
         TextField search = new TextField(); search.setPromptText("Search..."); search.getStyleClass().add("search-field"); search.setPrefWidth(250);
         toolbar.getChildren().add(search);
 
-        List<Harvest> myHarvests = WorkerService.getHarvestsByWorker(SessionManager.getFwId());
-        double wagePerUnit = 0;
         FarmWorker worker = WorkerService.getWorkerByFwId(SessionManager.getFwId());
-        if (worker != null) wagePerUnit = worker.getWagePerUnit();
+        double wagePerUnit = worker != null ? worker.getWagePerUnit() : 0;
+        String jobType = worker != null ? worker.getJobType() : "HARVESTER";
+        String wageUnit = worker != null && worker.getWageUnit() != null ? worker.getWageUnit() : "";
 
         VBox list = new VBox(12);
-        populateWorkReal(list, myHarvests, wagePerUnit, "");
-        double finalWage = wagePerUnit;
-        search.textProperty().addListener((o, ov, nv) -> populateWorkReal(list, myHarvests, finalWage, nv.trim().toLowerCase()));
+        if ("IRRIGATOR".equals(jobType) || "PLOWER".equals(jobType)) {
+            List<FarmLog> myLogs = WorkerService.getLogsByWorker(SessionManager.getFwId());
+            populateLogWorkReal(list, myLogs, wageUnit, "");
+            search.textProperty().addListener((o, ov, nv) -> populateLogWorkReal(list, myLogs, wageUnit, nv.trim().toLowerCase()));
+        } else {
+            List<Harvest> myHarvests = WorkerService.getHarvestsByWorker(SessionManager.getFwId());
+            populateWorkReal(list, myHarvests, wagePerUnit, "");
+            double finalWage = wagePerUnit;
+            search.textProperty().addListener((o, ov, nv) -> populateWorkReal(list, myHarvests, finalWage, nv.trim().toLowerCase()));
+        }
 
         root.getChildren().addAll(toolbar, list);
         setContent(root);
@@ -295,13 +335,41 @@ public class WorkerDashboardController {
             Label info = new Label(h.getFieldName() + " | " + formatRelativeDate(h.getHarvestDate())); info.getStyleClass().add("list-sub");
             VBox txt = new VBox(2, crop, info);
             Region sp = new Region(); HBox.setHgrow(sp, Priority.ALWAYS);
-            Label qty = new Label(String.format("%.0f %s", h.getQuantityGood(), h.getUnit())); qty.getStyleClass().add("mini-stat-value"); qty.setStyle("-fx-font-size: 13px;");
+            Label qty = new Label(String.format(Locale.US, "%.0f %s", h.getQuantityGood(), h.getUnit())); qty.getStyleClass().add("mini-stat-value"); qty.setStyle("-fx-font-size: 13px;");
             String status = h.getStatus() != null ? h.getStatus() : "PENDING";
             Label statusLbl = new Label(capitalize(status));
             if ("APPROVED".equals(status)) statusLbl.getStyleClass().add("pill-up");
             else if ("REJECTED".equals(status)) statusLbl.getStyleClass().add("pill-down");
             else statusLbl.setStyle("-fx-background-color: #FFF4E5; -fx-text-fill: #E68A00; -fx-font-size: 11px; -fx-font-weight: bold; -fx-padding: 2 8 2 8; -fx-background-radius: 10;");
             VBox right = new VBox(3, qty, statusLbl); right.setAlignment(Pos.CENTER_RIGHT);
+            HBox row = new HBox(12, txt, sp, right); row.setAlignment(Pos.CENTER_LEFT); row.getStyleClass().add("timeline-card");
+            container.getChildren().add(row);
+        }
+        if (container.getChildren().isEmpty()) {
+            Label e = new Label("No records found"); e.getStyleClass().add("card-sub"); e.setStyle("-fx-padding: 30; -fx-font-size: 14px;");
+            container.getChildren().add(e);
+        }
+    }
+
+    private void populateLogWorkReal(VBox container, List<FarmLog> data, String wageUnit, String q) {
+        container.getChildren().clear();
+        for (FarmLog log : data) {
+            String haystack = ((log.getLogType() != null ? log.getLogType() : "") + " "
+                    + (log.getFieldName() != null ? log.getFieldName() : "") + " "
+                    + (log.getDescription() != null ? log.getDescription() : "")).toLowerCase();
+            if (!q.isEmpty() && !haystack.contains(q)) continue;
+
+            Label primary = new Label(capitalize(log.getLogType())); primary.getStyleClass().add("list-primary");
+            String sub = log.getFieldName() + " | " + formatRelativeDate(log.getLogDate());
+            if (log.getDescription() != null && !log.getDescription().isBlank()) {
+                sub = log.getFieldName() + " | " + log.getDescription() + " | " + formatRelativeDate(log.getLogDate());
+            }
+            Label info = new Label(sub); info.getStyleClass().add("list-sub");
+            VBox txt = new VBox(2, primary, info);
+            Region sp = new Region(); HBox.setHgrow(sp, Priority.ALWAYS);
+            double qtyVal = log.getQuantity() != null ? log.getQuantity() : 0;
+            Label qty = new Label(String.format(Locale.US, "%.0f %s", qtyVal, wageUnit)); qty.getStyleClass().add("mini-stat-value"); qty.setStyle("-fx-font-size: 13px;");
+            VBox right = new VBox(3, qty); right.setAlignment(Pos.CENTER_RIGHT);
             HBox row = new HBox(12, txt, sp, right); row.setAlignment(Pos.CENTER_LEFT); row.getStyleClass().add("timeline-card");
             container.getChildren().add(row);
         }
@@ -425,7 +493,7 @@ public class WorkerDashboardController {
             try {
                 double qty = Double.parseDouble(nv.trim());
                 double wage = qty * wagePerUnit;
-                previewCalc.setText(String.format("%.0f NIS", wage));
+                previewCalc.setText(String.format(Locale.US, "%.0f NIS", wage));
             } catch (Exception ex) { previewCalc.setText("-- NIS"); }
         });
 
@@ -507,7 +575,7 @@ public class WorkerDashboardController {
             try {
                 double qty = Double.parseDouble(nv.trim());
                 double wage = qty * wagePerUnit;
-                previewCalc.setText(String.format("%.0f NIS", wage));
+                previewCalc.setText(String.format(Locale.US, "%.0f NIS", wage));
             } catch (Exception ex) { previewCalc.setText("-- NIS"); }
         });
 
@@ -600,7 +668,7 @@ public class WorkerDashboardController {
             try {
                 double qty = Double.parseDouble(nv.trim());
                 double wage = qty * wagePerUnit;
-                previewCalc.setText(String.format("%.0f NIS", wage));
+                previewCalc.setText(String.format(Locale.US, "%.0f NIS", wage));
             } catch (Exception ex) { previewCalc.setText("-- NIS"); }
         });
 
@@ -673,9 +741,9 @@ public class WorkerDashboardController {
 
         GridPane stats = row(33.33, 33.33, 33.33);
         addCells(stats,
-                statCard("NIS", String.format("%,.0f", earnings.totalEarned), "Total Earned"),
-                statCard("NIS", String.format("%,.0f", totalReceived), "Received"),
-                statCard("NIS", String.format("%,.0f", remaining), "Remaining"));
+                statCard("NIS", String.format(Locale.US, "%,.0f", earnings.totalEarned), "Total Earned"),
+                statCard("NIS", String.format(Locale.US, "%,.0f", totalReceived), "Received"),
+                statCard("NIS", String.format(Locale.US, "%,.0f", remaining), "Remaining"));
 
         VBox ringCard = card();
         ringCard.setSpacing(14); ringCard.setAlignment(Pos.CENTER);
@@ -685,7 +753,7 @@ public class WorkerDashboardController {
         Arc arc = new Arc(c, c, r2, r2, 90, -paidPct * 3.6); arc.setType(ArcType.OPEN); arc.setFill(Color.TRANSPARENT);
         arc.getStyleClass().add("ring-progress"); arc.setStrokeWidth(14); arc.setStrokeLineCap(StrokeLineCap.ROUND);
         Pane ring = new Pane(track, arc); ring.setMinSize(120, 120); ring.setPrefSize(120, 120); ring.setMaxSize(120, 120);
-        Label pctL = new Label(String.format("%.0f%%", paidPct)); pctL.getStyleClass().add("ring-center");
+        Label pctL = new Label(String.format(Locale.US, "%.0f%%", paidPct)); pctL.getStyleClass().add("ring-center");
         Label pctS = new Label("Paid"); pctS.getStyleClass().add("ring-center-sub");
         VBox ctr = new VBox(pctL, pctS); ctr.setAlignment(Pos.CENTER);
         StackPane ringStack = new StackPane(ring, ctr); ringStack.setMinSize(120, 120); ringStack.setMaxSize(120, 120);
@@ -704,7 +772,7 @@ public class WorkerDashboardController {
                 Label pd = new Label(formatRelativeDate(py.getTransactionDate())); pd.getStyleClass().add("list-sub");
                 VBox ptxt = new VBox(2, pn, pd);
                 Region psp = new Region(); HBox.setHgrow(psp, Priority.ALWAYS);
-                Label pamt = new Label(String.format("+\u20AA %,.0f", py.getAmount())); pamt.getStyleClass().add("pct-up"); pamt.setStyle("-fx-font-size: 14px;");
+                Label pamt = new Label(String.format(Locale.US, "+\u20AA %,.0f", py.getAmount())); pamt.getStyleClass().add("pct-up"); pamt.setStyle("-fx-font-size: 14px;");
                 HBox prow = new HBox(12, ptxt, psp, pamt); prow.setAlignment(Pos.CENTER_LEFT); prow.getStyleClass().add("timeline-card");
                 histCard.getChildren().add(prow);
             }
@@ -846,7 +914,7 @@ public class WorkerDashboardController {
             dayDetailCard.getChildren().add(buildDayEntryRow(
                     logTypeColor(log.getLogType()), logTypeLabel(log.getLogType()),
                     log.getFieldName() + " \u2022 " + log.getWorkerName(),
-                    log.getQuantity() != null ? String.format("%.0f", log.getQuantity()) : "",
+                    log.getQuantity() != null ? String.format(Locale.US, "%.0f", log.getQuantity()) : "",
                     isMine));
         }
 
@@ -857,7 +925,7 @@ public class WorkerDashboardController {
             dayDetailCard.getChildren().add(buildDayEntryRow(
                     "#2E7D32", "Harvest \u2014 " + h.getCropName(),
                     h.getFieldName() + " \u2022 " + h.getWorkerName(),
-                    String.format("%.0f %s", h.getQuantityGood(), h.getUnit()),
+                    String.format(Locale.US, "%.0f %s", h.getQuantityGood(), h.getUnit()),
                     isMine));
         }
 
