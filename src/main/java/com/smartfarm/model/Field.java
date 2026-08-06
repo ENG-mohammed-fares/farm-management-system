@@ -6,7 +6,6 @@ public class Field {
     private int farmId;
     private String name;
     private double sizeDunums;
-    private String soilStatus;
     private String location;
 
     public int getFieldId() { return fieldId; }
@@ -20,9 +19,6 @@ public class Field {
 
     public double getSizeDunums() { return sizeDunums; }
     public void setSizeDunums(double sizeDunums) { this.sizeDunums = sizeDunums; }
-
-    public String getSoilStatus() { return soilStatus; }
-    public void setSoilStatus(String soilStatus) { this.soilStatus = soilStatus; }
 
     public String getLocation() { return location; }
     public void setLocation(String location) { this.location = location; }

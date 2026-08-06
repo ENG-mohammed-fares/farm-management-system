@@ -31,6 +31,10 @@ CREATE TABLE Farm_Workers (
     hired_at DATE DEFAULT CURRENT_DATE,
     CONSTRAINT chk_job_type CHECK (job_type IN ('IRRIGATOR', 'HARVESTER', 'PLOWER')),
     CONSTRAINT chk_wage_unit CHECK (wage_unit IN ('liter', 'dunum', 'kg', 'piece')),
+	CONSTRAINT chk_job_type_unit CHECK (
+    (job_type = 'HARVESTER' AND wage_unit IN ('piece', 'kg')) OR
+    (job_type = 'IRRIGATOR' AND wage_unit = 'liter') OR
+    (job_type = 'PLOWER' AND wage_unit = 'dunum')),
     CONSTRAINT chk_fw_status CHECK (status IN ('ACTIVE', 'INACTIVE')),
     CONSTRAINT uq_farm_user UNIQUE (farm_id, user_id)
 );
@@ -40,9 +44,7 @@ CREATE TABLE Fields (
     farm_id INTEGER NOT NULL,
     name VARCHAR(100) NOT NULL,
     size_dunums DECIMAL(12,2),
-    soil_status VARCHAR(15) DEFAULT 'NOT_TESTED',
     location VARCHAR(200),
-    CONSTRAINT chk_soil CHECK (soil_status IN ('EXCELLENT', 'GOOD', 'FAIR', 'POOR', 'NOT_TESTED'))
 );
 
 CREATE TABLE Crops (
@@ -70,8 +72,15 @@ CREATE TABLE Fertilizers_Medicines (
     is_organic BOOLEAN DEFAULT FALSE,
     applied_date DATE,
     notes TEXT,
-    CONSTRAINT chk_fm_type CHECK (type IN ('FERTILIZER', 'MEDICINE'))
+    CONSTRAINT chk_fm_type CHECK (type IN ('FERTILIZER', 'MEDICINE')),
+	CONSTRAINT chk_fm_unit CHECK (unit IN (
+        'kg/dunum', 
+        'kg/cup', 
+        'liter/cup', 
+        'liter/dunum'))
 );
+
+
 
 CREATE TABLE Farm_Logs (
     log_id SERIAL PRIMARY KEY,
@@ -147,12 +156,12 @@ INSERT INTO Users (name, email, phone, password, role) VALUES
 INSERT INTO Farms (name, location, size_dunums) VALUES
 ('Hased Farm', 'Nablus, Palestine', 50000.00);
 
-INSERT INTO Fields (farm_id, name, size_dunums, soil_status, location) VALUES
-(1, 'Field A-1', 8000.00, 'GOOD', 'North Section'),
-(1, 'Field A-2', 5000.00, 'EXCELLENT', 'North Section'),
-(1, 'Field B-1', 10000.00, 'FAIR', 'East Section'),
-(1, 'Field C-1', 4000.00, 'GOOD', 'South Section'),
-(1, 'Field C-3', 5000.00, 'NOT_TESTED', 'South Section');
+INSERT INTO Fields (farm_id, name, size_dunums, location) VALUES
+(1, 'Field A-1', 8000.00, 'North Section'),
+(1, 'Field A-2', 5000.00, 'North Section'),
+(1, 'Field B-1', 10000.00, 'East Section'),
+(1, 'Field C-1', 4000.00, 'South Section'),
+(1, 'Field C-3', 5000.00, 'South Section');
 
 INSERT INTO Farm_Workers (farm_id, user_id, job_type, wage_per_unit, wage_unit) VALUES
 (1, 2, 'HARVESTER', 8.00, 'kg'),
@@ -206,3 +215,5 @@ INSERT INTO Transactions (type, amount, description, related_harvest_id, related
 ('PURCHASE', 60.00, 'Water cost: 15 m3 x 4 NIS', NULL, NULL, '2025-07-05'),
 ('SALE', 3200.00, 'Sold 800 kg olives to olive press', 4, NULL, '2025-06-30'),
 ('PAYMENT', 500.00, 'Sami Khalil salary - plowing', NULL, 4, '2025-06-25');
+
+

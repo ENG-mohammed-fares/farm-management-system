@@ -241,9 +241,9 @@ public class WorkerDashboardController {
         setContent(root);
     }
 
-    private String getInitials(String fullName) {
-        if (fullName == null || fullName.trim().isEmpty()) return "?";
-        String[] parts = fullName.trim().split("\\s+");
+    private String getInitials(String UserName) {
+        if (UserName == null || UserName.trim().isEmpty()) return "?";
+        String[] parts = UserName.trim().split("\\s+");
         if (parts.length == 1) return parts[0].substring(0, Math.min(2, parts[0].length())).toUpperCase();
         return ("" + parts[0].charAt(0) + parts[1].charAt(0)).toUpperCase();
     }

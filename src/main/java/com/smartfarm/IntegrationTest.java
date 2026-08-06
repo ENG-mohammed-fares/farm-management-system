@@ -184,7 +184,7 @@ public class IntegrationTest {
         check("Active crops count", FarmService.getActiveCropsCount() >= 0);
 
         String fieldName = "ITEST_Field_" + System.currentTimeMillis();
-        FarmService.Result addField = FarmService.addField(fieldName, "100", "Square Meter (m\u00B2)", "GOOD", "Test Loc");
+        FarmService.Result addField = FarmService.addField(fieldName, "100", "Square Meter (m\u00B2)", "Test Loc");
         check("Add field", addField.success);
 
         Field created = FarmService.getAllFields().stream()

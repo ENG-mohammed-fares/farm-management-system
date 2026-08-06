@@ -430,7 +430,7 @@ public class SignUpController {
         String confirm = confirmPasswordField.getText();
 
         if (name.isEmpty()) {
-            errorLabel.setText("Please enter your full name");
+            errorLabel.setText("Please enter your user name");
             shakeAnimation(nameField.getParent());
             return;
         }
@@ -479,29 +479,29 @@ public class SignUpController {
             return;
         }
 
-        if (!password.matches(".*[A-Z].*")) {
-            errorLabel.setText("Password must contain at least one uppercase letter");
-            shakeAnimation(passwordField.getParent());
-            return;
-        }
+        // if (!password.matches(".*[A-Z].*")) {ss
+        //     errorLabel.setText("Password must contain at least one uppercase letter");
+        //     shakeAnimation(passwordField.getParent());
+        //     return;
+        // }
 
-        if (!password.matches(".*[a-z].*")) {
-            errorLabel.setText("Password must contain at least one lowercase letter");
-            shakeAnimation(passwordField.getParent());
-            return;
-        }
+        // if (!password.matches(".*[a-z].*")) {
+        //     errorLabel.setText("Password must contain at least one lowercase letter");
+        //     shakeAnimation(passwordField.getParent());
+        //     return;
+        // }
 
-        if (!password.matches(".*\\d.*")) {
-            errorLabel.setText("Password must contain at least one number");
-            shakeAnimation(passwordField.getParent());
-            return;
-        }
+        // if (!password.matches(".*\\d.*")) {
+        //     errorLabel.setText("Password must contain at least one number");
+        //     shakeAnimation(passwordField.getParent());
+        //     return;
+        // }
 
-        if (!password.matches(".*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>\\/?].*")) {
-            errorLabel.setText("Password must contain at least one special character");
-            shakeAnimation(passwordField.getParent());
-            return;
-        }
+        // if (!password.matches(".*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>\\/?].*")) {
+        //     errorLabel.setText("Password must contain at least one special character");
+        //     shakeAnimation(passwordField.getParent());
+        //     return;
+        // }
 
         if (confirm.trim().isEmpty()) {
             errorLabel.setText("Please confirm your password");
@@ -537,12 +537,6 @@ public class SignUpController {
                     return;
                 }
 
-                if (UserDAO.nameExists(name)) {
-                    setButtonLoading(signUpButton, false);
-                    errorLabel.setText("This username is already taken");
-                    shakeAnimation(nameField.getParent());
-                    return;
-                }
 
                 int userId = UserDAO.createWorker(name, finalEmail, finalPhone, password);
                 FarmWorkerDAO.assignWorker(userId, "HARVESTER", 8.0, "kg");

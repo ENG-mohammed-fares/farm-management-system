@@ -35,14 +35,13 @@ public class FieldDAO {
         return field;
     }
 
-    public static int addField(String name, double sizeDunums, String soilStatus, String location) throws SQLException {
-        String sql = "INSERT INTO Fields (farm_id, name, size_dunums, soil_status, location) VALUES (1, ?, ?, ?, ?) RETURNING field_id";
+    public static int addField(String name, double sizeDunums, String location) throws SQLException {
+        String sql = "INSERT INTO Fields (farm_id, name, size_dunums, location) VALUES (1, ?, ?, ?) RETURNING field_id";
         Connection conn = DatabaseConnection.getConnection();
         PreparedStatement ps = conn.prepareStatement(sql);
         ps.setString(1, name);
         ps.setDouble(2, sizeDunums);
-        ps.setString(3, soilStatus);
-        ps.setString(4, location);
+        ps.setString(3, location);
         ResultSet rs = ps.executeQuery();
         rs.next();
         int fieldId = rs.getInt(1);
@@ -50,15 +49,14 @@ public class FieldDAO {
         return fieldId;
     }
 
-    public static boolean updateField(int fieldId, String name, double sizeDunums, String soilStatus, String location) throws SQLException {
-        String sql = "UPDATE Fields SET name = ?, size_dunums = ?, soil_status = ?, location = ? WHERE field_id = ?";
+    public static boolean updateField(int fieldId, String name, double sizeDunums, String location) throws SQLException {
+        String sql = "UPDATE Fields SET name = ?, size_dunums = ?, location = ? WHERE field_id = ?";
         Connection conn = DatabaseConnection.getConnection();
         PreparedStatement ps = conn.prepareStatement(sql);
         ps.setString(1, name);
         ps.setDouble(2, sizeDunums);
-        ps.setString(3, soilStatus);
-        ps.setString(4, location);
-        ps.setInt(5, fieldId);
+        ps.setString(3, location);
+        ps.setInt(4, fieldId);
         int rows = ps.executeUpdate();
         ps.close();
         return rows > 0;
@@ -100,7 +98,6 @@ public class FieldDAO {
         f.setFarmId(rs.getInt("farm_id"));
         f.setName(rs.getString("name"));
         f.setSizeDunums(rs.getDouble("size_dunums"));
-        f.setSoilStatus(rs.getString("soil_status"));
         f.setLocation(rs.getString("location"));
         return f;
     }

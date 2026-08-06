@@ -329,6 +329,43 @@ public class DashboardController {
         return ("" + parts[0].charAt(0) + parts[1].charAt(0)).toUpperCase();
     }
 
+    private String[] getWageUnitsForJob(String jobType) {
+        if ("IRRIGATOR".equals(jobType)) {
+            return new String[]{"liter"};
+        }
+        if ("HARVESTER".equals(jobType)) {
+            return new String[]{"kg", "piece"};
+        }
+        if ("PLOWER".equals(jobType)) {
+            return new String[]{"dunum"};
+        }
+        return new String[]{"kg", "liter", "dunum", "piece"};
+    }
+
+    private void applyWageUnitsForJob(ComboBox<String> unitBox, String jobType) {
+        String current = unitBox.getValue();
+        unitBox.getItems().setAll(getWageUnitsForJob(jobType));
+        if (current != null && unitBox.getItems().contains(current)) {
+            unitBox.setValue(current);
+        } else if (!unitBox.getItems().isEmpty()) {
+            unitBox.setValue(unitBox.getItems().get(0));
+        }
+    }
+
+    private String[] getItemUnitsForType(String itemType) {
+  return new String[]{"kg/cup", "liter/cup", "liter/dunum", "kg/dunum"};
+    }
+
+    private void applyItemUnitsForType(ComboBox<String> unitBox, String itemType) {
+        String current = unitBox.getValue();
+        unitBox.getItems().setAll(getItemUnitsForType(itemType));
+        if (current != null && unitBox.getItems().contains(current)) {
+            unitBox.setValue(current);
+        } else if (!unitBox.getItems().isEmpty()) {
+            unitBox.setValue(unitBox.getItems().get(0));
+        }
+    }
+
     private VBox buildRecentHarvestsCard() {
         Label title = new Label("Recent Harvests");
         title.getStyleClass().add("card-title");
@@ -713,11 +750,6 @@ public class DashboardController {
         HBox sizeRow = new HBox(8, sizeField, unitBox);
         HBox.setHgrow(sizeField, Priority.ALWAYS);
 
-        ComboBox<String> soilBox = new ComboBox<>();
-        soilBox.getItems().addAll("EXCELLENT", "GOOD", "FAIR", "POOR", "NOT_TESTED");
-        soilBox.setValue("NOT_TESTED");
-        soilBox.setMaxWidth(Double.MAX_VALUE);
-
         TextField locationField = new TextField();
         locationField.setPromptText("Location");
 
@@ -727,7 +759,6 @@ public class DashboardController {
         content.getChildren().addAll(
                 new Label("Field Name"), nameField,
                 new Label("Size"), sizeRow,
-                new Label("Soil Status"), soilBox,
                 new Label("Location"), locationField,
                 errorLabel);
 
@@ -736,7 +767,7 @@ public class DashboardController {
         Button okButton = (Button) dialog.getDialogPane().lookupButton(ButtonType.OK);
         okButton.addEventFilter(javafx.event.ActionEvent.ACTION, event -> {
             FarmService.Result result = FarmService.addField(
-                    nameField.getText(), sizeField.getText(), unitBox.getValue(), soilBox.getValue(), locationField.getText());
+                    nameField.getText(), sizeField.getText(), unitBox.getValue(), locationField.getText());
 
             if (!result.success) {
                 errorLabel.setText(result.message);
@@ -762,27 +793,15 @@ public class DashboardController {
                 if (!combined.contains(query)) continue;
             }
 
-            String soilDot = getSoilDot(f.getSoilStatus());
             container.getChildren().add(buildFieldCard(
-                    f.getFieldId(), f.getName(), f.getLocation() != null ? f.getLocation() : "",
-                    String.format("%,.0f", f.getSizeDunums()), f.getSoilStatus(),
-                    soilDot, "N/A", crops));
+                    f.getFieldId(), f.getName(), f.getLocation() != null && !f.getLocation().isBlank() ? f.getLocation() : "Unknown",
+                    String.format("%,.0f", f.getSizeDunums()), "N/A", crops));
         }
         if (container.getChildren().isEmpty()) {
             Label empty = new Label("No fields found");
             empty.getStyleClass().add("card-sub");
             empty.setStyle("-fx-padding: 30 0 30 0; -fx-font-size: 14px;");
             container.getChildren().add(empty);
-        }
-    }
-
-    private String getSoilDot(String soilStatus) {
-        if (soilStatus == null) return "\u26AA";
-        switch (soilStatus) {
-            case "EXCELLENT": case "GOOD": return "\uD83D\uDFE2";
-            case "FAIR": return "\uD83D\uDFE1";
-            case "POOR": return "\uD83D\uDD34";
-            default: return "\u26AA";
         }
     }
 
@@ -801,31 +820,26 @@ public class DashboardController {
         return card;
     }
 
-    private VBox buildFieldCard(int fieldId, String name, String desc, String dunums, String soil,
-                                String soilDot, String lastIrrigation, List<com.smartfarm.model.Crop> crops) {
+    private VBox buildFieldCard(int fieldId, String name, String location, String dunums, String lastIrrigation, List<com.smartfarm.model.Crop> crops) {
         Label nameLabel = new Label("\uD83C\uDF3F " + name);
         nameLabel.getStyleClass().add("field-name");
 
-        Label descLabel = new Label(desc);
+        Label descLabel = new Label(location);
         descLabel.getStyleClass().add("card-sub");
 
         Region sp1 = new Region();
         HBox.setHgrow(sp1, Priority.ALWAYS);
-
-        Label statusBadge = new Label(soilDot + " " + soil);
-        statusBadge.getStyleClass().add("soil-badge");
 
         Button deleteFieldBtn = new Button("\uD83D\uDDD1");
         deleteFieldBtn.getStyleClass().add("filter-btn");
         deleteFieldBtn.setStyle("-fx-text-fill: #D32F2F; -fx-font-size: 12px; -fx-padding: 4 8 4 8;");
         deleteFieldBtn.setOnAction(e -> confirmDeleteField(fieldId, name));
 
-        HBox header = new HBox(8, nameLabel, descLabel, sp1, statusBadge, deleteFieldBtn);
+        HBox header = new HBox(8, nameLabel, descLabel, sp1, deleteFieldBtn);
         header.setAlignment(Pos.CENTER_LEFT);
 
         HBox infoRow = new HBox(24,
                 fieldInfo("\uD83D\uDCCF", "Size", dunums + " m\u00B2"),
-                fieldInfo("\uD83C\uDF0D", "Soil", soil),
                 fieldInfo("\uD83D\uDCA7", "Last Irrigation", lastIrrigation));
         infoRow.setAlignment(Pos.CENTER_LEFT);
 
@@ -1101,9 +1115,9 @@ public class DashboardController {
         wageField.setPromptText("Wage per unit (e.g. 8)");
 
         ComboBox<String> unitBox = new ComboBox<>();
-        unitBox.getItems().addAll("liter", "dunum", "kg", "piece");
-        unitBox.setValue("kg");
         unitBox.setMaxWidth(Double.MAX_VALUE);
+        applyWageUnitsForJob(unitBox, jobBox.getValue());
+        jobBox.valueProperty().addListener((o, ov, nv) -> applyWageUnitsForJob(unitBox, nv));
 
         Label errorLabel = new Label();
         errorLabel.setStyle("-fx-text-fill: #D32F2F; -fx-font-size: 12px;");
@@ -1139,11 +1153,23 @@ public class DashboardController {
         if (cropName == null) return "\uD83C\uDF31";
         String n = cropName.toLowerCase();
         if (n.contains("tomato")) return "\uD83C\uDF45";
+        if (n.contains("potato")) return "\uD83E\uDD54";
+        if (n.contains("carrot")) return "\uD83E\uDD55";
+        if(n.contains("corn") || n.contains("maize")) return "\uD83C\uDF3D";
         if (n.contains("wheat") || n.contains("barley")) return "\uD83C\uDF3E";
-        if (n.contains("olive")) return "\uD83E\uDED2";
+        if (n.contains("olive")) return "\ud83c\udf33";
         if (n.contains("cucumber")) return "\uD83E\uDD52";
         if (n.contains("citrus")) return "\uD83C\uDF4A";
         if (n.contains("fig")) return "\uD83C\uDF5E";
+        if (n.contains("grape")) return "\uD83C\uDF47";
+        if (n.contains("banana")) return "\uD83C\uDF4C";
+        if (n.contains("apple")) return "\uD83C\uDF4E";
+        if (n.contains("pear")) return "\uD83C\uDF50";
+        if (n.contains("peach")) return "\uD83C\uDF51";
+        if (n.contains("cherry")) return "\uD83C\uDF52";
+        if (n.contains("strawberry")) return "\uD83C\uDF53";
+        if (n.contains("watermelon")) return "\uD83C\uDF49";
+        if (n.contains("pumpkin")) return "\uD83C\uDF83";
         return "\uD83C\uDF31";
     }
 
@@ -1350,9 +1376,12 @@ public class DashboardController {
         TextField wageField = new TextField(String.valueOf(worker.getWagePerUnit()));
 
         ComboBox<String> unitBox = new ComboBox<>();
-        unitBox.getItems().addAll("liter", "dunum", "kg", "piece");
-        unitBox.setValue(worker.getWageUnit());
         unitBox.setMaxWidth(Double.MAX_VALUE);
+        applyWageUnitsForJob(unitBox, jobBox.getValue());
+        if (unitBox.getItems().contains(worker.getWageUnit())) {
+            unitBox.setValue(worker.getWageUnit());
+        }
+        jobBox.valueProperty().addListener((o, ov, nv) -> applyWageUnitsForJob(unitBox, nv));
 
         ComboBox<String> statusBox = new ComboBox<>();
         statusBox.getItems().addAll("ACTIVE", "INACTIVE");
@@ -1693,12 +1722,11 @@ public class DashboardController {
         diseaseField.setPromptText("e.g. Olive leaf spot");
 
         TextField quantityField = new TextField();
-        quantityField.setPromptText("Quantity");
+        quantityField.setPromptText("Quantity (e.g. 12 kg/cup)");
 
         ComboBox<String> unitBox = new ComboBox<>();
-        unitBox.getItems().addAll("kg/dunum", "kg/cup", "liter");
-        unitBox.setValue("kg/dunum");
         unitBox.setMaxWidth(Double.MAX_VALUE);
+        applyItemUnitsForType(unitBox, typeBox.getValue());
 
         CheckBox organicBox = new CheckBox("Organic");
 
@@ -1712,8 +1740,7 @@ public class DashboardController {
             diseaseLabel.setVisible(isMedicine); diseaseLabel.setManaged(isMedicine);
             diseaseField.setVisible(isMedicine); diseaseField.setManaged(isMedicine);
             organicBox.setVisible(!isMedicine); organicBox.setManaged(!isMedicine);
-            unitBox.getItems().setAll(isMedicine ? new String[]{"liter"} : new String[]{"kg/dunum", "kg/cup"});
-            unitBox.setValue(unitBox.getItems().get(0));
+            applyItemUnitsForType(unitBox, typeBox.getValue());
         };
         typeBox.valueProperty().addListener((o, ov, nv) -> toggleMedicineFields.run());
         toggleMedicineFields.run();

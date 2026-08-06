@@ -30,6 +30,16 @@ public class WorkerService {
         }
     }
 
+    private static boolean isValidWageUnit(String jobType, String wageUnit) {
+        if (jobType == null || wageUnit == null) return false;
+        switch (jobType) {
+            case "IRRIGATOR": return "liter".equals(wageUnit);
+            case "HARVESTER": return "kg".equals(wageUnit) || "piece".equals(wageUnit);
+            case "PLOWER": return "dunum".equals(wageUnit);
+            default: return "kg".equals(wageUnit) || "liter".equals(wageUnit) || "dunum".equals(wageUnit) || "piece".equals(wageUnit);
+        }
+    }
+
     // ===================== WORKER MANAGEMENT =====================
 
     public static List<FarmWorker> getAllWorkers() {
@@ -59,6 +69,9 @@ public class WorkerService {
             return new Result(false, "Wage must be a valid number");
         }
 
+        if (!isValidWageUnit(jobType, wageUnit)) {
+            return new Result(false, "Selected wage unit is not valid for this job type");
+        }
         try {
             boolean updated = FarmWorkerDAO.updateWorker(fwId, jobType, wage, wageUnit, status);
             return updated ? new Result(true, "Worker updated successfully") : new Result(false, "Worker not found");
@@ -129,6 +142,10 @@ public class WorkerService {
             if (wage <= 0) return new Result(false, "Wage must be greater than 0");
         } catch (Exception e) {
             return new Result(false, "Wage must be a valid number");
+        }
+
+        if (!isValidWageUnit(jobType, wageUnit)) {
+            return new Result(false, "Selected wage unit is not valid for this job type");
         }
 
         try {

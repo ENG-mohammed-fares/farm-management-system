@@ -36,7 +36,15 @@ public class FarmService {
         }
     }
 
-    public static Result addField(String name, String sizeText, String unit, String soilStatus, String location) {
+    private static boolean isValidItemUnit(String type, String unit) {
+        if (type == null || unit == null) return false;
+        if ("MEDICINE".equals(type)) {
+            return "liter/cup".equals(unit) || "liter/dunum".equals(unit);
+        }
+        return "kg/dunum".equals(unit) || "kg/cup".equals(unit);
+    }
+
+    public static Result addField(String name, String sizeText, String unit, String location) {
         if (name == null || name.trim().isEmpty()) {
             return new Result(false, "Field name is required");
         }
@@ -51,7 +59,7 @@ public class FarmService {
         double sizeInSquareMeters = com.smartfarm.util.AreaUnitConverter.toSquareMeters(sizeInput, unit);
 
         try {
-            FieldDAO.addField(name.trim(), sizeInSquareMeters, soilStatus, location != null ? location.trim() : "");
+            FieldDAO.addField(name.trim(), sizeInSquareMeters, location != null ? location.trim() : "");
             return new Result(true, "Field added successfully");
         } catch (SQLException e) {
             e.printStackTrace();
@@ -59,9 +67,9 @@ public class FarmService {
         }
     }
 
-    public static Result updateField(int fieldId, String name, double size, String soilStatus, String location) {
+    public static Result updateField(int fieldId, String name, double size, String location) {
         try {
-            boolean updated = FieldDAO.updateField(fieldId, name, size, soilStatus, location);
+            boolean updated = FieldDAO.updateField(fieldId, name, size, location);
             return updated ? new Result(true, "Field updated") : new Result(false, "Field not found");
         } catch (SQLException e) {
             e.printStackTrace();
@@ -229,6 +237,9 @@ public class FarmService {
                                                  String unit, boolean isOrganic, String notes) {
         if (name == null || name.trim().isEmpty()) {
             return new Result(false, "Name is required");
+        }
+        if (!isValidItemUnit(type, unit)) {
+            return new Result(false, "Unit is not valid for the selected item type");
         }
         try {
             FertilizerMedicineDAO.addItem(fieldId, name.trim(), type, composition, activeIngredient,

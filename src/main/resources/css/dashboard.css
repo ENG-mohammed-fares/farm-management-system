@@ -47,7 +47,7 @@
 }
 
 .main-area {
-    -fx-background-color: #2E7D32;
+    -fx-background-color: #257029;
 }
 
 .content-wrapper {
@@ -169,7 +169,7 @@
     -fx-alignment: center;
     -fx-background-color: #E8F5E9;
     -fx-background-radius: 12;
-    -fx-text-fill: #2E7D32;
+    -fx-text-fill: #206924;
 }
 
 .dark-mode .stat-icon {
@@ -238,7 +238,7 @@
     -fx-font-size: 11px; -fx-font-weight: bold;
     -fx-padding: 2 8 2 8; -fx-background-radius: 10;
 }
-.dark-mode .pill-up   { -fx-background-color: #1A3A1A; -fx-text-fill: #81C784; }
+.dark-mode .pill-up   { -fx-background-color: #1A3A1A; -fx-text-fill: #328035; }
 .dark-mode .pill-down { -fx-background-color: #3A1F1F; -fx-text-fill: #EF9A9A; }
 
 .divider {
@@ -342,7 +342,7 @@
 .filter-active:hover { -fx-background-color: #256d28; }
 .dark-mode .filter-btn { -fx-background-color: #383838; -fx-text-fill: #CCCCCC; }
 .dark-mode .filter-btn:hover { -fx-background-color: #444444; }
-.dark-mode .filter-active { -fx-background-color: #2E7D32; -fx-text-fill: #FFFFFF; }
+.dark-mode .filter-active { -fx-background-color: #27792b; -fx-text-fill: #FFFFFF; }
 .dark-mode .filter-active:hover { -fx-background-color: #256d28; }
 
 .timeline-container {
@@ -408,7 +408,7 @@
     -fx-prompt-text-fill: #AAAAAA;
 }
 .search-field:focused {
-    -fx-border-color: #2E7D32;
+    -fx-border-color: #237727;
     -fx-background-color: #FFFFFF;
 }
 .dark-mode .search-field {
@@ -438,7 +438,7 @@
     -fx-background-color: #E8F5E9;
 }
 .combo-box-popup .list-view .list-cell:filled:selected {
-    -fx-background-color: #2E7D32;
+    -fx-background-color: #217425;
     -fx-text-fill: #FFFFFF;
 }
 .dark-mode .combo-box-popup .list-view {
@@ -452,12 +452,12 @@
     -fx-background-color: #1A3A1A;
 }
 .dark-mode .combo-box-popup .list-view .list-cell:filled:selected {
-    -fx-background-color: #2E7D32;
+    -fx-background-color: #1d6b21;
     -fx-text-fill: #FFFFFF;
 }
 
 .action-btn {
-    -fx-background-color: #2E7D32;
+    -fx-background-color: #19691d;
     -fx-text-fill: #FFFFFF;
     -fx-font-size: 13px; -fx-font-weight: bold;
     -fx-background-radius: 10;
@@ -475,18 +475,8 @@
 }
 .dark-mode .field-name { -fx-text-fill: #81C784; }
 
-.soil-badge {
-    -fx-font-size: 12px;
-    -fx-font-weight: bold;
-    -fx-text-fill: #555555;
-    -fx-background-color: #F5F5F5;
-    -fx-background-radius: 15;
-    -fx-padding: 4 12 4 12;
-}
-.dark-mode .soil-badge {
-    -fx-text-fill: #CCCCCC;
-    -fx-background-color: #383838;
-}
+
+
 
 .field-info-icon {
     -fx-font-size: 12px;
@@ -509,5 +499,5 @@
 }
 .dark-mode .crop-chip {
     -fx-background-color: #1A3A1A;
-    -fx-text-fill: #81C784;
+    -fx-text-fill: #65c46a;
 }

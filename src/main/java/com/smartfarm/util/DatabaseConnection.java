@@ -7,8 +7,8 @@ import java.sql.Statement;
 
 public class DatabaseConnection {
 
-    private static final String URL = getEnvOrDefault("SMARTFARM_DB_URL", "jdbc:postgresql://localhost:5432/hasd_db");
-    private static final String USER = getEnvOrDefault("SMARTFARM_DB_USER", "hased");
+    private static final String URL = getEnvOrDefault("SMARTFARM_DB_URL", "jdbc:postgresql://localhost:5432/hasd");
+    private static final String USER = getEnvOrDefault("SMARTFARM_DB_USER", "yamen");
     private static final String PASSWORD = getEnvOrDefault("SMARTFARM_DB_PASSWORD", "123456");
 
     private static Connection connection;
