@@ -484,8 +484,8 @@ public class WorkerDashboardController {
         if (!fields.isEmpty()) fieldBox.setValue(fields.get(0));
         fieldBox.setMaxWidth(Double.MAX_VALUE); fieldBox.getStyleClass().add("search-field");
 
-        Label qLabel = new Label("Water Quantity (m\u00B3)"); qLabel.getStyleClass().add("mini-stat-label"); qLabel.setStyle("-fx-font-size: 12px; -fx-font-weight: bold;");
-        TextField qtyField = new TextField(); qtyField.setPromptText("Enter cubic meters..."); qtyField.getStyleClass().add("search-field");
+        Label qLabel = new Label("Water Quantity (cup)"); qLabel.getStyleClass().add("mini-stat-label"); qLabel.setStyle("-fx-font-size: 12px; -fx-font-weight: bold;");
+        TextField qtyField = new TextField(); qtyField.setPromptText("Enter cups..."); qtyField.getStyleClass().add("search-field");
 
         Label nLabel = new Label("Notes (optional)"); nLabel.getStyleClass().add("mini-stat-label"); nLabel.setStyle("-fx-font-size: 12px; -fx-font-weight: bold;");
         TextField notesField = new TextField(); notesField.setPromptText("Any notes..."); notesField.getStyleClass().add("search-field");
@@ -497,7 +497,7 @@ public class WorkerDashboardController {
         VBox preview = new VBox(4, previewTitle, previewCalc); preview.setAlignment(Pos.CENTER);
         preview.setStyle("-fx-padding: 10; -fx-background-color: #F5F7F5; -fx-background-radius: 10;");
 
-        Label waterCostNote = new Label("\u2139 Water cost (4 NIS/m\u00B3) is billed to the farm separately");
+        Label waterCostNote = new Label("\u2139 Water cost (4 NIS/cup) is billed to the farm separately");
         waterCostNote.getStyleClass().add("card-sub");
         waterCostNote.setStyle("-fx-font-size: 11px;");
 
@@ -536,24 +536,21 @@ public class WorkerDashboardController {
             }
 
             submitBtn.setDisable(true); submitBtn.setText("Submitting...");
-            PauseTransition p = new PauseTransition(Duration.millis(600));
-            p.setOnFinished(ev -> {
-                FarmService.Result result = FarmService.addLog(
-                        fieldBox.getValue().getFieldId(), fwId, "IRRIGATION", notesField.getText(), qty);
 
-                submitBtn.setDisable(false); submitBtn.setText("Submit Irrigation Log");
+            FarmService.Result result = FarmService.addLog(
+                    fieldBox.getValue().getFieldId(), fwId, "IRRIGATION", notesField.getText(), qty);
 
-                if (result.success) {
-                    resultLabel.setStyle("-fx-text-fill: #2E7D32; -fx-font-size: 13px;");
-                    resultLabel.setText(result.message);
-                    qtyField.clear(); notesField.clear();
-                    previewCalc.setText("-- NIS");
-                } else {
-                    resultLabel.setStyle("-fx-text-fill: #D32F2F; -fx-font-size: 13px;");
-                    resultLabel.setText(result.message);
-                }
-            });
-            p.play();
+            submitBtn.setDisable(false); submitBtn.setText("Submit Irrigation Log");
+
+            if (result.success) {
+                resultLabel.setStyle("-fx-text-fill: #2E7D32; -fx-font-size: 13px;");
+                resultLabel.setText(result.message);
+                qtyField.clear(); notesField.clear();
+                previewCalc.setText("-- NIS");
+            } else {
+                resultLabel.setStyle("-fx-text-fill: #D32F2F; -fx-font-size: 13px;");
+                resultLabel.setText(result.message);
+            }
         });
 
         formCard.getChildren().addAll(title, fLabel, fieldBox, qLabel, qtyField, nLabel, notesField,
@@ -629,24 +626,21 @@ public class WorkerDashboardController {
             }
 
             submitBtn.setDisable(true); submitBtn.setText("Submitting...");
-            PauseTransition p = new PauseTransition(Duration.millis(600));
-            p.setOnFinished(ev -> {
-                FarmService.Result result = FarmService.addLog(
-                        fieldBox.getValue().getFieldId(), fwId, "PLOWING", notesField.getText(), qty);
 
-                submitBtn.setDisable(false); submitBtn.setText("Submit Plowing Log");
+            FarmService.Result result = FarmService.addLog(
+                    fieldBox.getValue().getFieldId(), fwId, "PLOWING", notesField.getText(), qty);
 
-                if (result.success) {
-                    resultLabel.setStyle("-fx-text-fill: #2E7D32; -fx-font-size: 13px;");
-                    resultLabel.setText(result.message);
-                    qtyField.clear(); notesField.clear();
-                    previewCalc.setText("-- NIS");
-                } else {
-                    resultLabel.setStyle("-fx-text-fill: #D32F2F; -fx-font-size: 13px;");
-                    resultLabel.setText(result.message);
-                }
-            });
-            p.play();
+            submitBtn.setDisable(false); submitBtn.setText("Submit Plowing Log");
+
+            if (result.success) {
+                resultLabel.setStyle("-fx-text-fill: #2E7D32; -fx-font-size: 13px;");
+                resultLabel.setText(result.message);
+                qtyField.clear(); notesField.clear();
+                previewCalc.setText("-- NIS");
+            } else {
+                resultLabel.setStyle("-fx-text-fill: #D32F2F; -fx-font-size: 13px;");
+                resultLabel.setText(result.message);
+            }
         });
 
         formCard.getChildren().addAll(title, fLabel, fieldBox, qLabel, qtyField, nLabel, notesField,

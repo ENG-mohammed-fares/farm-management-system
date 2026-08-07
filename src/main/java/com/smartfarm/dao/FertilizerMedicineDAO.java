@@ -51,9 +51,9 @@ public class FertilizerMedicineDAO {
                               String unit, boolean isOrganic, String notes) throws SQLException {
         String sql = "INSERT INTO Fertilizers_Medicines " +
                 "(field_id, name, type, composition, active_ingredient, target_disease, quantity, unit, is_organic, applied_date, notes) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_DATE, ?) RETURNING fm_id";
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_DATE, ?)";
         Connection conn = DatabaseConnection.getConnection();
-        PreparedStatement ps = conn.prepareStatement(sql);
+        PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
         if (fieldId != null) ps.setInt(1, fieldId); else ps.setNull(1, Types.INTEGER);
         ps.setString(2, name);
         ps.setString(3, type);
@@ -64,11 +64,14 @@ public class FertilizerMedicineDAO {
         ps.setString(8, unit);
         ps.setBoolean(9, isOrganic);
         ps.setString(10, notes);
-        ResultSet rs = ps.executeQuery();
-        rs.next();
-        int fmId = rs.getInt(1);
-        rs.close(); ps.close();
-        return fmId;
+        ps.executeUpdate();
+        try (ResultSet rs = ps.getGeneratedKeys()) {
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        }
+        ps.close();
+        throw new SQLException("Failed to retrieve generated fm_id");
     }
 
     public static boolean updateQuantity(int fmId, double newQuantity) throws SQLException {

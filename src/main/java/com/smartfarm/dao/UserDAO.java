@@ -8,19 +8,21 @@ import com.smartfarm.util.PasswordHasher;
 public class UserDAO {
 
     public static int createWorker(String name, String email, String phone, String password) throws SQLException {
-        String sql = "INSERT INTO Users (name, email, phone, password, role) VALUES (?, ?, ?, ?, 'WORKER') RETURNING user_id";
+        String sql = "INSERT INTO Users (name, email, phone, password, role) VALUES (?, ?, ?, ?, 'WORKER')";
         Connection conn = DatabaseConnection.getConnection();
-        PreparedStatement ps = conn.prepareStatement(sql);
+        PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
         ps.setString(1, name);
         ps.setString(2, email != null && !email.isEmpty() ? email : null);
         ps.setString(3, phone != null && !phone.isEmpty() ? phone : null);
         ps.setString(4, PasswordHasher.hash(password));
-        ResultSet rs = ps.executeQuery();
-        rs.next();
-        int userId = rs.getInt(1);
-        rs.close();
+        ps.executeUpdate();
+        try (ResultSet rs = ps.getGeneratedKeys()) {
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        }
         ps.close();
-        return userId;
+        throw new SQLException("Failed to retrieve generated user_id");
     }
 
     public static int[] login(String input, String password) throws SQLException {

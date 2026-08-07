@@ -10,18 +10,21 @@ import com.smartfarm.util.DatabaseConnection;
 public class FarmWorkerDAO {
 
     public static int assignWorker(int userId, String jobType, double wagePerUnit, String wageUnit) throws SQLException {
-        String sql = "INSERT INTO Farm_Workers (farm_id, user_id, job_type, wage_per_unit, wage_unit) VALUES (1, ?, ?, ?, ?) RETURNING fw_id";
+        String sql = "INSERT INTO Farm_Workers (farm_id, user_id, job_type, wage_per_unit, wage_unit) VALUES (1, ?, ?, ?, ?)";
         Connection conn = DatabaseConnection.getConnection();
-        PreparedStatement ps = conn.prepareStatement(sql);
+        PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
         ps.setInt(1, userId);
         ps.setString(2, jobType);
         ps.setDouble(3, wagePerUnit);
         ps.setString(4, wageUnit);
-        ResultSet rs = ps.executeQuery();
-        rs.next();
-        int fwId = rs.getInt(1);
-        rs.close(); ps.close();
-        return fwId;
+        ps.executeUpdate();
+        try (ResultSet rs = ps.getGeneratedKeys()) {
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        }
+        ps.close();
+        throw new SQLException("Failed to retrieve generated fw_id");
     }
 
     public static int getFwId(int userId) throws SQLException {

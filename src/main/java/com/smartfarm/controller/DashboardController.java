@@ -331,15 +331,15 @@ public class DashboardController {
 
     private String[] getWageUnitsForJob(String jobType) {
         if ("IRRIGATOR".equals(jobType)) {
-            return new String[]{"liter"};
+            return new String[]{"cup"};
         }
         if ("HARVESTER".equals(jobType)) {
-            return new String[]{"kg", "piece"};
+            return new String[]{"kg"};
         }
         if ("PLOWER".equals(jobType)) {
             return new String[]{"dunum"};
         }
-        return new String[]{"kg", "liter", "dunum", "piece"};
+        return new String[]{"kg", "cup", "dunum"};
     }
 
     private void applyWageUnitsForJob(ComboBox<String> unitBox, String jobType) {

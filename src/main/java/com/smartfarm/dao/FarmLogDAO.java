@@ -73,9 +73,9 @@ public class FarmLogDAO {
 
     public static int addLog(int fieldId, int fwId, String logType, String description, Double quantity) throws SQLException {
         String sql = "INSERT INTO Farm_Logs (field_id, fw_id, log_type, description, quantity, log_date) " +
-                "VALUES (?, ?, ?, ?, ?, CURRENT_DATE) RETURNING log_id";
+                "VALUES (?, ?, ?, ?, ?, CURRENT_DATE)";
         Connection conn = DatabaseConnection.getConnection();
-        PreparedStatement ps = conn.prepareStatement(sql);
+        PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
         ps.setInt(1, fieldId);
         ps.setInt(2, fwId);
         ps.setString(3, logType);
@@ -85,11 +85,14 @@ public class FarmLogDAO {
         } else {
             ps.setNull(5, Types.DECIMAL);
         }
-        ResultSet rs = ps.executeQuery();
-        rs.next();
-        int logId = rs.getInt(1);
-        rs.close(); ps.close();
-        return logId;
+        ps.executeUpdate();
+        try (ResultSet rs = ps.getGeneratedKeys()) {
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        }
+        ps.close();
+        throw new SQLException("Failed to retrieve generated log_id");
     }
 
     public static boolean deleteLog(int logId) throws SQLException {

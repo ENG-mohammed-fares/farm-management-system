@@ -30,10 +30,10 @@ CREATE TABLE Farm_Workers (
     status VARCHAR(10) NOT NULL DEFAULT 'ACTIVE',
     hired_at DATE DEFAULT CURRENT_DATE,
     CONSTRAINT chk_job_type CHECK (job_type IN ('IRRIGATOR', 'HARVESTER', 'PLOWER')),
-    CONSTRAINT chk_wage_unit CHECK (wage_unit IN ('liter', 'dunum', 'kg', 'piece')),
+    CONSTRAINT chk_wage_unit CHECK (wage_unit IN ('cup', 'dunum', 'kg', 'piece')),
 	CONSTRAINT chk_job_type_unit CHECK (
     (job_type = 'HARVESTER' AND wage_unit IN ('piece', 'kg')) OR
-    (job_type = 'IRRIGATOR' AND wage_unit = 'liter') OR
+    (job_type = 'IRRIGATOR' AND wage_unit = 'cup') OR
     (job_type = 'PLOWER' AND wage_unit = 'dunum')),
     CONSTRAINT chk_fw_status CHECK (status IN ('ACTIVE', 'INACTIVE')),
     CONSTRAINT uq_farm_user UNIQUE (farm_id, user_id)
@@ -167,7 +167,7 @@ INSERT INTO Farm_Workers (farm_id, user_id, job_type, wage_per_unit, wage_unit) 
 (1, 2, 'HARVESTER', 8.00, 'kg'),
 (1, 3, 'HARVESTER', 8.00, 'kg'),
 (1, 4, 'PLOWER', 50.00, 'dunum'),
-(1, 5, 'IRRIGATOR', 6.00, 'liter'),
+(1, 5, 'IRRIGATOR', 6.00, 'cup'),
 (1, 6, 'HARVESTER', 10.00, 'kg');
 
 INSERT INTO Crops (field_id, name, type, planted_date, quantity, status) VALUES
@@ -182,10 +182,10 @@ INSERT INTO Crops (field_id, name, type, planted_date, quantity, status) VALUES
 INSERT INTO Fertilizers_Medicines (field_id, name, type, composition, active_ingredient, target_disease, quantity, unit, is_organic, applied_date, notes) VALUES
 (2, 'NPK Fertilizer', 'FERTILIZER', 'Nitrogen-Phosphorus-Potassium 20-20-20', NULL, NULL, 150.00, 'kg/dunum', FALSE, '2025-06-01', 'Applied before planting season'),
 (3, 'Urea', 'FERTILIZER', 'CO(NH2)2 46% Nitrogen', NULL, NULL, 80.00, 'kg/dunum', FALSE, '2025-05-20', 'For wheat growth stage'),
-(1, 'Fungicide Pro', 'MEDICINE', 'Copper hydroxide + Mancozeb', 'Copper hydroxide', 'Olive leaf spot', 12.00, 'liter', FALSE, '2025-05-15', 'Spray every 2 weeks'),
-(2, 'Insecticide Max', 'MEDICINE', 'Lambda-cyhalothrin 5%', 'Lambda-cyhalothrin', 'Whitefly on tomatoes', 5.00, 'liter', FALSE, '2025-06-10', 'Apply early morning'),
+(1, 'Fungicide Pro', 'MEDICINE', 'Copper hydroxide + Mancozeb', 'Copper hydroxide', 'Olive leaf spot', 12.00, 'liter/cup', FALSE, '2025-05-15', 'Spray every 2 weeks'),
+(2, 'Insecticide Max', 'MEDICINE', 'Lambda-cyhalothrin 5%', 'Lambda-cyhalothrin', 'Whitefly on tomatoes', 5.00, 'liter/cup', FALSE, '2025-06-10', 'Apply early morning'),
 (4, 'Compost Mix', 'FERTILIZER', 'Organic plant and animal waste', NULL, NULL, 500.00, 'kg/dunum', TRUE, '2025-04-01', 'Organic fertilizer for citrus'),
-(3, 'Herbicide', 'MEDICINE', 'Glyphosate 41%', 'Glyphosate', 'Broadleaf weeds', 8.00, 'liter', FALSE, '2025-03-01', 'Pre-planting weed control');
+(3, 'Herbicide', 'MEDICINE', 'Glyphosate 41%', 'Glyphosate', 'Broadleaf weeds', 8.00, 'liter/cup', FALSE, '2025-03-01', 'Pre-planting weed control');
 
 INSERT INTO Farm_Logs (field_id, fw_id, log_type, description, quantity, log_date) VALUES
 (2, 4, 'IRRIGATION', 'Morning irrigation for tomatoes', 15.00, '2025-07-05'),

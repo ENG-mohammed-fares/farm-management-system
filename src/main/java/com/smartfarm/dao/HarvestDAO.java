@@ -75,9 +75,9 @@ public class HarvestDAO {
     public static int addHarvest(int fieldId, int cropId, int fwId, double quantityGood,
                                  double quantityDamaged, String unit, String notes) throws SQLException {
         String sql = "INSERT INTO Harvests (field_id, crop_id, fw_id, quantity_good, quantity_damaged, unit, harvest_date, notes, status) " +
-                "VALUES (?, ?, ?, ?, ?, ?, CURRENT_DATE, ?, 'PENDING') RETURNING harvest_id";
+                "VALUES (?, ?, ?, ?, ?, ?, CURRENT_DATE, ?, 'PENDING')";
         Connection conn = DatabaseConnection.getConnection();
-        PreparedStatement ps = conn.prepareStatement(sql);
+        PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
         ps.setInt(1, fieldId);
         ps.setInt(2, cropId);
         ps.setInt(3, fwId);
@@ -85,11 +85,14 @@ public class HarvestDAO {
         ps.setDouble(5, quantityDamaged);
         ps.setString(6, unit);
         ps.setString(7, notes);
-        ResultSet rs = ps.executeQuery();
-        rs.next();
-        int harvestId = rs.getInt(1);
-        rs.close(); ps.close();
-        return harvestId;
+        ps.executeUpdate();
+        try (ResultSet rs = ps.getGeneratedKeys()) {
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        }
+        ps.close();
+        throw new SQLException("Failed to retrieve generated harvest_id");
     }
 
     public static boolean updateStatus(int harvestId, String status) throws SQLException {

@@ -59,19 +59,22 @@ public class CropDAO {
 
     public static int addCrop(int fieldId, String name, String type, LocalDate plantedDate, String quantity) throws SQLException {
         String sql = "INSERT INTO Crops (field_id, name, type, planted_date, quantity, status) " +
-                "VALUES (?, ?, ?, ?, ?, 'GROWING') RETURNING crop_id";
+                "VALUES (?, ?, ?, ?, ?, 'GROWING')";
         Connection conn = DatabaseConnection.getConnection();
-        PreparedStatement ps = conn.prepareStatement(sql);
+        PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
         ps.setInt(1, fieldId);
         ps.setString(2, name);
         ps.setString(3, type);
         ps.setDate(4, plantedDate != null ? Date.valueOf(plantedDate) : null);
         ps.setString(5, quantity);
-        ResultSet rs = ps.executeQuery();
-        rs.next();
-        int cropId = rs.getInt(1);
-        rs.close(); ps.close();
-        return cropId;
+        ps.executeUpdate();
+        try (ResultSet rs = ps.getGeneratedKeys()) {
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        }
+        ps.close();
+        throw new SQLException("Failed to retrieve generated crop_id");
     }
 
     public static boolean updateCropStatus(int cropId, String status) throws SQLException {

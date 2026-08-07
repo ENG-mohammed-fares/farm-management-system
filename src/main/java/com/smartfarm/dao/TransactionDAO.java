@@ -63,19 +63,22 @@ public class TransactionDAO {
     public static int addTransaction(String type, double amount, String description,
                                      Integer relatedHarvestId, Integer relatedUserId) throws SQLException {
         String sql = "INSERT INTO Transactions (type, amount, description, related_harvest_id, related_user_id, transaction_date) " +
-                "VALUES (?, ?, ?, ?, ?, CURRENT_DATE) RETURNING transaction_id";
+                "VALUES (?, ?, ?, ?, ?, CURRENT_DATE)";
         Connection conn = DatabaseConnection.getConnection();
-        PreparedStatement ps = conn.prepareStatement(sql);
+        PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
         ps.setString(1, type);
         ps.setDouble(2, amount);
         ps.setString(3, description);
         if (relatedHarvestId != null) ps.setInt(4, relatedHarvestId); else ps.setNull(4, Types.INTEGER);
         if (relatedUserId != null) ps.setInt(5, relatedUserId); else ps.setNull(5, Types.INTEGER);
-        ResultSet rs = ps.executeQuery();
-        rs.next();
-        int transactionId = rs.getInt(1);
-        rs.close(); ps.close();
-        return transactionId;
+        ps.executeUpdate();
+        try (ResultSet rs = ps.getGeneratedKeys()) {
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        }
+        ps.close();
+        throw new SQLException("Failed to retrieve generated transaction_id");
     }
 
     public static boolean deleteTransaction(int transactionId) throws SQLException {

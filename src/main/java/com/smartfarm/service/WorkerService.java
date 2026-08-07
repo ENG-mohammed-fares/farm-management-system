@@ -33,10 +33,10 @@ public class WorkerService {
     private static boolean isValidWageUnit(String jobType, String wageUnit) {
         if (jobType == null || wageUnit == null) return false;
         switch (jobType) {
-            case "IRRIGATOR": return "liter".equals(wageUnit);
-            case "HARVESTER": return "kg".equals(wageUnit) || "piece".equals(wageUnit);
+            case "IRRIGATOR": return "cup".equals(wageUnit);
+            case "HARVESTER": return "kg".equals(wageUnit) ;
             case "PLOWER": return "dunum".equals(wageUnit);
-            default: return "kg".equals(wageUnit) || "liter".equals(wageUnit) || "dunum".equals(wageUnit) || "piece".equals(wageUnit);
+            default: return "kg".equals(wageUnit) || "cup".equals(wageUnit) || "dunum".equals(wageUnit) ;
         }
     }
 

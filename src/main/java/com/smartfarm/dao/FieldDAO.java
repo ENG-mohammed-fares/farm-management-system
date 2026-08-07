@@ -36,21 +36,24 @@ public class FieldDAO {
     }
 
     public static int addField(String name, double sizeDunums, String location) throws SQLException {
-        String sql = "INSERT INTO Fields (farm_id, name, size_dunums, location) VALUES (1, ?, ?, ?) RETURNING field_id";
+        String sql = "INSERT INTO Fields (farm_id, name, size_dunums, soil_status, location) VALUES (1, ?, ?, ?, ?)";
         Connection conn = DatabaseConnection.getConnection();
-        PreparedStatement ps = conn.prepareStatement(sql);
+        PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
         ps.setString(1, name);
         ps.setDouble(2, sizeDunums);
         ps.setString(3, location);
-        ResultSet rs = ps.executeQuery();
-        rs.next();
-        int fieldId = rs.getInt(1);
-        rs.close(); ps.close();
-        return fieldId;
+        ps.executeUpdate();
+        try (ResultSet rs = ps.getGeneratedKeys()) {
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        }
+        ps.close();
+        throw new SQLException("Failed to retrieve generated field_id");
     }
 
     public static boolean updateField(int fieldId, String name, double sizeDunums, String location) throws SQLException {
-        String sql = "UPDATE Fields SET name = ?, size_dunums = ?, location = ? WHERE field_id = ?";
+        String sql = "UPDATE Fields SET name = ?, size_dunums = ?, soil_status = ?, location = ? WHERE field_id = ?";
         Connection conn = DatabaseConnection.getConnection();
         PreparedStatement ps = conn.prepareStatement(sql);
         ps.setString(1, name);
