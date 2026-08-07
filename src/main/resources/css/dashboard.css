@@ -301,8 +301,12 @@
     -fx-min-width: 36; -fx-min-height: 36;
     -fx-max-width: 36; -fx-max-height: 36;
     -fx-alignment: center;
-    -fx-background-color: #E8F5E9;
+    -fx-background-color: #DCEFE2;
     -fx-background-radius: 10;
+    -fx-border-color: #B8D8BC;
+    -fx-border-width: 1;
+    -fx-border-radius: 10;
+    -fx-text-fill: #256D2E;
 }
 .dark-mode .row-icon { -fx-background-color: #1A3A1A; }
 
