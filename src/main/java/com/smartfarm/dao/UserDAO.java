@@ -31,7 +31,6 @@ public class UserDAO {
         PreparedStatement ps = conn.prepareStatement(sql);
         ps.setString(1, input);
         ps.setString(2, input);
-        ps.setString(3, input);
         ResultSet rs = ps.executeQuery();
 
         if (rs.next()) {
