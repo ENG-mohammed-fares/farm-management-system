@@ -26,7 +26,7 @@ public class UserDAO {
     }
 
     public static int[] login(String input, String password) throws SQLException {
-        String sql = "SELECT user_id, password, role FROM Users WHERE LOWER(name) = LOWER(?) OR email = ? OR phone = ?";
+        String sql = "SELECT user_id, password, role FROM Users WHERE  email = ? OR phone = ?";
         Connection conn = DatabaseConnection.getConnection();
         PreparedStatement ps = conn.prepareStatement(sql);
         ps.setString(1, input);
