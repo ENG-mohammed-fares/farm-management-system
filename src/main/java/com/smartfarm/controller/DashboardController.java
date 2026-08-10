@@ -781,6 +781,19 @@ public class DashboardController {
         }
     }
 
+
+private String getLastIrrigationForField(int fieldId) {
+        java.util.Optional<java.time.LocalDate> lastDate = FarmService.getAllLogs().stream()
+                .filter(log -> log.getFieldId() == fieldId)
+                .filter(log -> "IRRIGATION".equalsIgnoreCase(log.getLogType()))
+                .map(com.smartfarm.model.FarmLog::getLogDate)
+                .filter(java.util.Objects::nonNull)
+                .max(java.time.LocalDate::compareTo);
+
+        return lastDate.map(this::formatRelativeDate).orElse("No irrigation yet");
+    }
+
+
     private void populateFieldsReal(VBox container, List<com.smartfarm.model.Field> fields, String query) {
         container.getChildren().clear();
         for (com.smartfarm.model.Field f : fields) {
@@ -793,9 +806,12 @@ public class DashboardController {
                 if (!combined.contains(query)) continue;
             }
 
-            container.getChildren().add(buildFieldCard(
-                    f.getFieldId(), f.getName(), f.getLocation() != null && !f.getLocation().isBlank() ? f.getLocation() : "Unknown",
-                    String.format("%,.0f", f.getSizeDunums()), "N/A", crops));
+  container.getChildren().add(buildFieldCard(
+                    f.getFieldId(), f.getName(),
+                    f.getLocation() != null && !f.getLocation().isBlank() ? f.getLocation() : "Unknown",
+                    String.format(java.util.Locale.US, "%,.0f", f.getSizeDunums()),
+                    getLastIrrigationForField(f.getFieldId()),
+                    crops));
         }
         if (container.getChildren().isEmpty()) {
             Label empty = new Label("No fields found");

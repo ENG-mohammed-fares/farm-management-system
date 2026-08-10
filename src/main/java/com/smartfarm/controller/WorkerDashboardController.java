@@ -44,6 +44,7 @@ import com.smartfarm.model.FarmWorker;
 import com.smartfarm.model.Harvest;
 import com.smartfarm.model.Field;
 import com.smartfarm.model.Crop;
+import com.smartfarm.model.FarmLog;
 import com.smartfarm.model.Transaction;
 import java.util.List;
 
@@ -263,28 +264,155 @@ public class WorkerDashboardController {
         if (days < 30) return (days / 7) + " weeks ago";
         return (days / 30) + " months ago";
     }
+private void populateLogWorkReal(VBox list, List<FarmLog> logs, double wagePerUnit, String searchText) {
+        list.getChildren().clear();
 
-    @FXML private void showMyWork() {
+        for (FarmLog log : logs) {
+
+            String searchableText = ((log.getFieldName() != null ? log.getFieldName() : "") + " " +
+                    (log.getDescription() != null ? log.getDescription() : "") + " " +
+                    (log.getLogType() != null ? log.getLogType() : "")).toLowerCase();
+
+            if (!searchText.isEmpty() && !searchableText.contains(searchText)) {
+                continue;
+            }
+
+            String logType = log.getLogType() != null ? log.getLogType() : "";
+            String icon;
+            String title;
+
+            switch (logType) {
+                case "IRRIGATION":
+                    icon = "\uD83D\uDCA7";
+                    title = "Irrigation";
+                    break;
+                case "PLOWING":
+                    icon = "\ud83d\ude9c";
+                    title = "Plowing";
+                    break;
+                default:
+                    icon = "\uD83D\uDCDD";
+                    title = "Work Performed";
+                    break;
+            }
+
+            double quantity = log.getQuantity() != null ? log.getQuantity() : 0.0;
+            double wage = quantity * wagePerUnit;
+
+            Label ic = new Label(icon);
+            ic.getStyleClass().add("row-icon");
+
+            String fieldName = log.getFieldName() != null ? log.getFieldName() : "Unknown";
+            String dateStr = log.getLogDate() != null ? formatRelativeDate(log.getLogDate()) : "";
+            String desc = log.getDescription() != null && !log.getDescription().isEmpty()
+                    ? " | " + log.getDescription() : "";
+
+            Label titleLabel = new Label(title);
+            titleLabel.getStyleClass().add("list-primary");
+
+            Label infoLabel = new Label(fieldName + desc + " | " + dateStr);
+            infoLabel.getStyleClass().add("list-sub");
+
+            VBox txt = new VBox(2, titleLabel, infoLabel);
+
+            Region sp = new Region();
+            HBox.setHgrow(sp, Priority.ALWAYS);
+
+            String unit = "IRRIGATION".equals(logType) ? "m\u00B3" : "dunum";
+            Label qtyLabel = new Label(String.format(java.util.Locale.US, "%,.1f %s", quantity, unit));
+            qtyLabel.getStyleClass().add("mini-stat-value");
+            qtyLabel.setStyle("-fx-font-size: 13px;");
+
+            Label wageLabel = new Label(String.format(java.util.Locale.US, "\u20AA %,.2f", wage));
+            wageLabel.getStyleClass().add("list-sub");
+
+            VBox right = new VBox(3, qtyLabel, wageLabel);
+            right.setAlignment(Pos.CENTER_RIGHT);
+
+            HBox row = new HBox(12, ic, txt, sp, right);
+            row.setAlignment(Pos.CENTER_LEFT);
+            row.getStyleClass().add("timeline-card");
+
+            list.getChildren().add(row);
+        }
+
+        if (list.getChildren().isEmpty()) {
+            Label empty = new Label("No records found");
+            empty.getStyleClass().add("card-sub");
+            empty.setStyle("-fx-padding: 30 0 30 0; -fx-font-size: 14px;");
+            list.getChildren().add(empty);
+        }
+    }
+
+    @FXML
+    private void showMyWork() {
         setActive(btnMyWork, "My Work");
-        VBox root = new VBox(18); root.getStyleClass().add("dash-root");
 
-        HBox toolbar = new HBox(12); toolbar.setAlignment(Pos.CENTER_LEFT);
-        TextField search = new TextField(); search.setPromptText("Search..."); search.getStyleClass().add("search-field"); search.setPrefWidth(250);
+        VBox root = new VBox(18);
+        root.getStyleClass().add("dash-root");
+
+        HBox toolbar = new HBox(12);
+        toolbar.setAlignment(Pos.CENTER_LEFT);
+
+        TextField search = new TextField();
+        search.setPromptText("\uD83D\uDD0D Search...");
+        search.getStyleClass().add("search-field");
+        search.setPrefWidth(250);
+
         toolbar.getChildren().add(search);
 
-        List<Harvest> myHarvests = WorkerService.getHarvestsByWorker(SessionManager.getFwId());
-        double wagePerUnit = 0;
-        FarmWorker worker = WorkerService.getWorkerByFwId(SessionManager.getFwId());
-        if (worker != null) wagePerUnit = worker.getWagePerUnit();
+        int fwId = SessionManager.getFwId();
+        FarmWorker worker = WorkerService.getWorkerByFwId(fwId);
 
         VBox list = new VBox(12);
-        populateWorkReal(list, myHarvests, wagePerUnit, "");
-        double finalWage = wagePerUnit;
-        search.textProperty().addListener((o, ov, nv) -> populateWorkReal(list, myHarvests, finalWage, nv.trim().toLowerCase()));
+
+        if (worker != null) {
+            double wagePerUnit = worker.getWagePerUnit();
+            String jobType = worker.getJobType() != null ? worker.getJobType() : "";
+
+            if ("HARVESTER".equalsIgnoreCase(jobType)) {
+
+                List<Harvest> myHarvests = WorkerService.getHarvestsByWorker(fwId);
+
+                populateWorkReal(list, myHarvests, wagePerUnit, "");
+
+                search.textProperty().addListener((o, ov, nv) ->
+                        populateWorkReal(list, myHarvests, wagePerUnit, nv.trim().toLowerCase()));
+
+            } else {
+
+                String logType = null;
+                if ("PLOWER".equalsIgnoreCase(jobType)) {
+                    logType = "PLOWING";
+                } else if ("IRRIGATOR".equalsIgnoreCase(jobType)) {
+                    logType = "IRRIGATION";
+                }
+
+                if (logType != null) {
+                    final String finalLogType = logType;
+
+                    List<FarmLog> myLogs = FarmService.getAllLogs().stream()
+                            .filter(log -> log.getFwId() == fwId)
+                            .filter(log -> finalLogType.equalsIgnoreCase(log.getLogType()))
+                            .toList();
+
+                    populateLogWorkReal(list, myLogs, wagePerUnit, "");
+
+                    search.textProperty().addListener((o, ov, nv) ->
+                            populateLogWorkReal(list, myLogs, wagePerUnit, nv.trim().toLowerCase()));
+                } else {
+                    Label empty = new Label("No work records found");
+                    empty.getStyleClass().add("card-sub");
+                    empty.setStyle("-fx-padding: 30 0 30 0; -fx-font-size: 14px;");
+                    list.getChildren().add(empty);
+                }
+            }
+        }
 
         root.getChildren().addAll(toolbar, list);
         setContent(root);
     }
+
 
     private void populateWorkReal(VBox container, List<Harvest> data, double wagePerUnit, String q) {
         container.getChildren().clear();
