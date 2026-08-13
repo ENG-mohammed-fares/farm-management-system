@@ -3,8 +3,10 @@ package com.smartfarm.service;
 import java.sql.SQLException;
 import java.util.List;
 
+import com.smartfarm.dao.FarmLogDAO;
 import com.smartfarm.dao.FarmWorkerDAO;
 import com.smartfarm.dao.HarvestDAO;
+import com.smartfarm.model.FarmLog;
 import com.smartfarm.model.FarmWorker;
 import com.smartfarm.model.Harvest;
 
@@ -199,6 +201,22 @@ public class WorkerService {
         }
     }
 
+    public static List<FarmLog> getLogsByWorker(int fwId) {
+        try {
+            return FarmLogDAO.getLogsByWorker(fwId);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return List.of();
+        }
+    }
+
+    /** Maps IRRIGATOR→IRRIGATION, PLOWER→PLOWING; null for HARVESTER/unknown. */
+    public static String logTypeForJob(String jobType) {
+        if ("IRRIGATOR".equals(jobType)) return "IRRIGATION";
+        if ("PLOWER".equals(jobType)) return "PLOWING";
+        return null;
+    }
+
     public static List<Harvest> getHarvestsByStatus(String status) {
         try {
             return "ALL".equals(status) ? HarvestDAO.getAllHarvests() : HarvestDAO.getHarvestsByStatus(status);
@@ -268,7 +286,7 @@ public class WorkerService {
         try {
             HarvestDAO.addHarvest(fieldId, cropId, fwId, goodQty, damagedQty, unit, notes);
             double estimatedWage = calculateWage(fwId, goodQty);
-            return new Result(true, String.format("Harvest submitted! Pending approval. Estimated wage: %.2f NIS", estimatedWage));
+            return new Result(true, String.format(java.util.Locale.US, "Harvest submitted! Pending approval. Estimated wage: %.2f NIS", estimatedWage));
         } catch (SQLException e) {
             e.printStackTrace();
             return new Result(false, "Database error");
@@ -287,6 +305,18 @@ public class WorkerService {
 
     public static EarningsSummary getWorkerEarnings(int fwId) {
         try {
+            FarmWorker worker = FarmWorkerDAO.getWorkerByFwId(fwId);
+            if (worker == null) {
+                return new EarningsSummary(0, 0);
+            }
+
+            String logType = logTypeForJob(worker.getJobType());
+            if (logType != null) {
+                double totalQty = FarmLogDAO.getWorkerTotalQuantity(fwId, logType);
+                double totalEarned = FarmLogDAO.getWorkerTotalEarnings(fwId, logType);
+                return new EarningsSummary(totalQty, totalEarned);
+            }
+
             double totalQty = HarvestDAO.getWorkerTotalQuantity(fwId);
             double totalEarned = HarvestDAO.getWorkerTotalEarnings(fwId);
             return new EarningsSummary(totalQty, totalEarned);

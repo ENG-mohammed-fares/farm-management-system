@@ -1,6 +1,7 @@
 package com.smartfarm.controller;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 
 import javafx.animation.FadeTransition;
@@ -188,8 +189,8 @@ public class DashboardController {
         GridPane g = row(25, 25, 25, 25);
         VBox c1 = buildKpiCard("\uD83C\uDF3F", String.valueOf(totalFields), "Total Farms", null);
         VBox c2 = buildKpiCard("\uD83D\uDC77", String.valueOf(activeWorkers), "Active Workers", null);
-        VBox c3 = buildKpiCard("\uD83C\uDF3E", String.format("%,.0f", totalHarvest), "Total Harvest (kg)", null);
-        VBox c4 = buildKpiCard("\uD83D\uDCB0", String.format("\u20AA %,.0f", summary.revenue), "Revenue", null);
+        VBox c3 = buildKpiCard("\uD83C\uDF3E", String.format(Locale.US, "%,.0f", totalHarvest), "Total Harvest (kg)", null);
+        VBox c4 = buildKpiCard("\uD83D\uDCB0", String.format(Locale.US, "\u20AA %,.0f", summary.revenue), "Revenue", null);
         addCells(g, c1, c2, c3, c4);
         return g;
     }
@@ -245,8 +246,8 @@ public class DashboardController {
         StackPane ring = buildDualRing(120, 14, salesPct, purchasesPct);
 
         VBox legend = new VBox(14,
-                legendRow("dot-sale", "Sales", String.format("\u20AA %,.0f", summary.revenue)),
-                legendRow("dot-purchase", "Purchases", String.format("\u20AA %,.0f", summary.expenses)));
+                legendRow("dot-sale", "Sales", String.format(Locale.US, "\u20AA %,.0f", summary.revenue)),
+                legendRow("dot-purchase", "Expenses", String.format(Locale.US, "\u20AA %,.0f", summary.expenses)));
         legend.setAlignment(Pos.CENTER_LEFT);
 
         Region sp = new Region();
@@ -270,15 +271,15 @@ public class DashboardController {
         title.getStyleClass().add("card-title");
         Label sub = new Label("Net profit");
         sub.getStyleClass().add("card-sub");
-        Label big = new Label(String.format("\u20AA %,.0f", summary.netProfit));
+        Label big = new Label(String.format(Locale.US, "\u20AA %,.0f", summary.netProfit));
         big.getStyleClass().add("big-value");
-        Label pct = new Label(String.format("%s %.0f%% margin", summary.netProfit >= 0 ? "\u25B2" : "\u25BC", margin));
+        Label pct = new Label(String.format(Locale.US, "%s %.0f%% margin", summary.netProfit >= 0 ? "\u25B2" : "\u25BC", margin));
         pct.getStyleClass().add(summary.netProfit >= 0 ? "pct-up" : "pct-down");
 
         VBox left = new VBox(4, title, sub, big, pct);
         left.setAlignment(Pos.CENTER_LEFT);
 
-        StackPane ring = buildRing(92, 12, margin, "ring-progress", String.format("%.0f%%", margin), "Margin");
+        StackPane ring = buildRing(92, 12, margin, "ring-progress", String.format(Locale.US, "%.0f%%", margin), "Margin");
 
         Region sp = new Region();
         HBox.setHgrow(sp, Priority.ALWAYS);
@@ -381,7 +382,7 @@ public class DashboardController {
         } else {
             for (int i = 0; i < limit; i++) {
                 Harvest h = harvests.get(i);
-                String qty = String.format("%,.0f %s", h.getQuantityGood(), h.getUnit());
+                String qty = String.format(Locale.US, "%,.0f %s", h.getQuantityGood(), h.getUnit());
                 String dateStr = formatRelativeDate(h.getHarvestDate());
                 list.getChildren().add(harvestRow("\uD83C\uDF3E", h.getCropName(), dateStr, qty));
             }
@@ -409,7 +410,7 @@ public class DashboardController {
             for (int i = 0; i < limit; i++) {
                 Transaction t = transactions.get(i);
                 String sign = "PURCHASE".equals(t.getType()) || "PAYMENT".equals(t.getType()) ? "-" : "+";
-                String amount = String.format("%s\u20AA %,.0f", sign, t.getAmount());
+                String amount = String.format(Locale.US, "%s\u20AA %,.0f", sign, t.getAmount());
                 String dateStr = formatRelativeDate(t.getTransactionDate());
                 list.getChildren().add(txRow(t.getType(), amount, dateStr, "", true));
             }
@@ -696,7 +697,7 @@ public class DashboardController {
         GridPane stats = row(33.33, 33.33, 33.33);
         addCells(stats,
                 buildFieldStatCard("\uD83C\uDF3F", String.valueOf(totalFields), "Total Fields"),
-                buildFieldStatCard("\uD83D\uDCCF", String.format("%,.0f", totalDunums), "Total Area (m\u00B2)"),
+                buildFieldStatCard("\uD83D\uDCCF", String.format(Locale.US, "%,.0f", totalDunums), "Total Area (m\u00B2)"),
                 buildFieldStatCard("\uD83C\uDF31", String.valueOf(activeCrops), "Active Crops"));
 
         HBox toolbar = new HBox(12);
@@ -806,12 +807,11 @@ private String getLastIrrigationForField(int fieldId) {
                 if (!combined.contains(query)) continue;
             }
 
-  container.getChildren().add(buildFieldCard(
-                    f.getFieldId(), f.getName(),
-                    f.getLocation() != null && !f.getLocation().isBlank() ? f.getLocation() : "Unknown",
-                    String.format(java.util.Locale.US, "%,.0f", f.getSizeDunums()),
-                    getLastIrrigationForField(f.getFieldId()),
-                    crops));
+            String soilDot = getSoilDot(f.getSoilStatus());
+            container.getChildren().add(buildFieldCard(
+                    f.getFieldId(), f.getName(), f.getLocation() != null ? f.getLocation() : "",
+                    String.format(Locale.US, "%,.0f", f.getSizeDunums()), f.getSoilStatus(),
+                    soilDot, "N/A", crops));
         }
         if (container.getChildren().isEmpty()) {
             Label empty = new Label("No fields found");
@@ -1060,7 +1060,7 @@ private String getLastIrrigationForField(int fieldId) {
         GridPane stats = row(33.33, 33.33, 33.33);
         addCells(stats,
                 buildFieldStatCard("\uD83C\uDF3E", String.valueOf(totalHarvests), "Total Harvests"),
-                buildFieldStatCard("\u2696\uFE0F", String.format("%,.0f", totalKg), "Approved kg"),
+                buildFieldStatCard("\u2696\uFE0F", String.format(Locale.US, "%,.0f", totalKg), "Approved kg"),
                 buildFieldStatCard("\u23F3", String.valueOf(pendingCount), "Pending Review"));
 
         HBox filterBar = new HBox(8);
@@ -1203,10 +1203,10 @@ private String getLastIrrigationForField(int fieldId) {
             VBox txt = new VBox(2, crop, field);
             Region sp = new Region();
             HBox.setHgrow(sp, Priority.ALWAYS);
-            Label good = new Label(String.format("\u2705 %.0f %s", h.getQuantityGood(), h.getUnit()));
+            Label good = new Label(String.format(Locale.US, "\u2705 %.0f %s", h.getQuantityGood(), h.getUnit()));
             good.getStyleClass().add("pct-up");
             good.setStyle("-fx-font-size: 13px;");
-            Label damaged = new Label(String.format("\u274C %.0f %s", h.getQuantityDamaged(), h.getUnit()));
+            Label damaged = new Label(String.format(Locale.US, "\u274C %.0f %s", h.getQuantityDamaged(), h.getUnit()));
             damaged.getStyleClass().add("pct-down");
             damaged.setStyle("-fx-font-size: 12px;");
             VBox nums = new VBox(2, good, damaged);
@@ -1313,7 +1313,7 @@ private String getLastIrrigationForField(int fieldId) {
             VBox txt = new VBox(2, name, role);
             Region sp = new Region();
             HBox.setHgrow(sp, Priority.ALWAYS);
-            Label wage = new Label(String.format("\uD83D\uDCB0 \u20AA %.0f/%s", w.getWagePerUnit(), w.getWageUnit()));
+            Label wage = new Label(String.format(Locale.US, "\uD83D\uDCB0 \u20AA %.0f/%s", w.getWagePerUnit(), w.getWageUnit()));
             wage.getStyleClass().add("mini-stat-value");
             wage.setStyle("-fx-font-size: 13px;");
             Label wageLabel = new Label("Wage per unit");
@@ -1448,9 +1448,9 @@ private String getLastIrrigationForField(int fieldId) {
 
         GridPane stats = row(33.33, 33.33, 33.33);
         addCells(stats,
-                buildFieldStatCard("\uD83D\uDCB0", String.format("\u20AA %,.0f", summary.revenue), "Total Revenue"),
-                buildFieldStatCard("\uD83D\uDED2", String.format("\u20AA %,.0f", summary.expenses), "Total Expenses"),
-                buildFieldStatCard("\uD83D\uDCCA", String.format("\u20AA %,.0f", summary.netProfit), "Net Profit"));
+                buildFieldStatCard("\uD83D\uDCB0", String.format(Locale.US, "\u20AA %,.0f", summary.revenue), "Total Revenue"),
+                buildFieldStatCard("\uD83D\uDED2", String.format(Locale.US, "\u20AA %,.0f", summary.expenses), "Total Expenses"),
+                buildFieldStatCard("\uD83D\uDCCA", String.format(Locale.US, "\u20AA %,.0f", summary.netProfit), "Net Profit"));
 
         HBox txToolbar = new HBox(12);
         txToolbar.setAlignment(Pos.CENTER_RIGHT);
@@ -1605,7 +1605,7 @@ private String getLastIrrigationForField(int fieldId) {
             Region sp = new Region();
             HBox.setHgrow(sp, Priority.ALWAYS);
             String sign = "SALE".equals(t.getType()) ? "+" : "-";
-            Label amount = new Label(String.format("%s\u20AA %,.0f", sign, t.getAmount()));
+            Label amount = new Label(String.format(Locale.US, "%s\u20AA %,.0f", sign, t.getAmount()));
             amount.getStyleClass().add("SALE".equals(t.getType()) ? "pct-up" : "pct-down");
             amount.setStyle("-fx-font-size: 15px; -fx-font-weight: bold;");
             VBox right = new VBox(4, amount);
@@ -1836,7 +1836,7 @@ private String getLastIrrigationForField(int fieldId) {
             VBox txt = new VBox(2, name, info);
             Region sp = new Region();
             HBox.setHgrow(sp, Priority.ALWAYS);
-            Label qty = new Label(String.format("%.0f %s", fm.getQuantity(), fm.getUnit()));
+            Label qty = new Label(String.format(Locale.US, "%.0f %s", fm.getQuantity(), fm.getUnit()));
             qty.getStyleClass().add("mini-stat-value");
             qty.setStyle("-fx-font-size: 13px;");
             Label stock = new Label(fm.isLowStock() ? "Low" : "Good");
@@ -1907,8 +1907,8 @@ private String getLastIrrigationForField(int fieldId) {
 
         GridPane midRow = row(50, 50);
         addCells(midRow,
-                buildReportRingCard("Harvest Quality", quality, "ring-progress", String.format("%.0f%%", quality), "Quality"),
-                buildReportRingCard("Budget Usage", budgetUsed, "ring-purchases", String.format("%.0f%%", budgetUsed), "Used"));
+                buildReportRingCard("Harvest Quality", quality, "ring-progress", String.format(Locale.US, "%.0f%%", quality), "Quality"),
+                buildReportRingCard("Budget Usage", budgetUsed, "ring-purchases", String.format(Locale.US, "%.0f%%", budgetUsed), "Used"));
 
         VBox cropTable = styledCard();
         cropTable.setSpacing(12);
@@ -1943,10 +1943,10 @@ private String getLastIrrigationForField(int fieldId) {
                 cname.getStyleClass().add("list-primary");
                 Region csp = new Region();
                 HBox.setHgrow(csp, Priority.ALWAYS);
-                Label cyield = new Label(String.format("%,.0f kg", entry.getValue()));
+                Label cyield = new Label(String.format(Locale.US, "%,.0f kg", entry.getValue()));
                 cyield.getStyleClass().add("mini-stat-value");
                 cyield.setStyle("-fx-font-size: 13px;");
-                Label cpct = pill(String.format("%.0f%%", pct), true);
+                Label cpct = pill(String.format(Locale.US, "%.0f%%", pct), true);
                 HBox crow = new HBox(12, rankLbl, cname, csp, cyield, cpct);
                 crow.setAlignment(Pos.CENTER_LEFT);
                 cropTable.getChildren().add(crow);
@@ -1972,7 +1972,7 @@ private String getLastIrrigationForField(int fieldId) {
                 rname.getStyleClass().add("list-primary");
                 Region rsp = new Region();
                 HBox.setHgrow(rsp, Priority.ALWAYS);
-                Label ramt = new Label(String.format("\u20AA %,.0f", t.getAmount()));
+                Label ramt = new Label(String.format(Locale.US, "\u20AA %,.0f", t.getAmount()));
                 ramt.getStyleClass().add("pct-up");
                 ramt.setStyle("-fx-font-size: 13px;");
                 HBox rrow = new HBox(8, rname, rsp, ramt);
@@ -2000,7 +2000,7 @@ private String getLastIrrigationForField(int fieldId) {
                 xname.getStyleClass().add("list-primary");
                 Region xsp = new Region();
                 HBox.setHgrow(xsp, Priority.ALWAYS);
-                Label xamt = new Label(String.format("\u20AA %,.0f", t.getAmount()));
+                Label xamt = new Label(String.format(Locale.US, "\u20AA %,.0f", t.getAmount()));
                 xamt.getStyleClass().add("pct-down");
                 xamt.setStyle("-fx-font-size: 13px;");
                 HBox xrow = new HBox(8, xname, xsp, xamt);
@@ -2197,15 +2197,15 @@ private String getLastIrrigationForField(int fieldId) {
         List<TimelineEntry> entries = new java.util.ArrayList<>();
 
         for (Harvest h : WorkerService.getAllHarvests()) {
-            String desc = String.format("%.0f %s collected from %s by %s", h.getQuantityGood(), h.getUnit(), h.getFieldName(), h.getWorkerName());
-            String value = String.format("+%.0f %s", h.getQuantityGood(), h.getUnit());
+            String desc = String.format(Locale.US, "%.0f %s collected from %s by %s", h.getQuantityGood(), h.getUnit(), h.getFieldName(), h.getWorkerName());
+            String value = String.format(Locale.US, "+%.0f %s", h.getQuantityGood(), h.getUnit());
             entries.add(new TimelineEntry("HARVEST", cropIcon(h.getCropName()), "Harvested " + h.getCropName(), desc, h.getHarvestDate(), value, "up"));
         }
 
         for (Transaction t : TransactionService.getAllTransactions()) {
             String title = "SALE".equals(t.getType()) ? "Sale Completed" : "PURCHASE".equals(t.getType()) ? "Purchase Made" : "Payment Sent";
             String sign = "SALE".equals(t.getType()) ? "+" : "-";
-            String value = String.format("%s\u20AA %,.0f", sign, t.getAmount());
+            String value = String.format(Locale.US, "%s\u20AA %,.0f", sign, t.getAmount());
             String dir = "SALE".equals(t.getType()) ? "up" : "down";
             entries.add(new TimelineEntry("TRANSACTION", txIcon(t.getType()), title,
                     t.getDescription() != null ? t.getDescription() : "", t.getTransactionDate(), value, dir));
@@ -2222,7 +2222,7 @@ private String getLastIrrigationForField(int fieldId) {
             }
             String desc = log.getFieldName() + " \u2022 " + log.getWorkerName()
                     + (log.getDescription() != null && !log.getDescription().isEmpty() ? " \u2022 " + log.getDescription() : "");
-            String value = log.getQuantity() != null ? String.format("%.0f", log.getQuantity()) : "";
+            String value = log.getQuantity() != null ? String.format(Locale.US, "%.0f", log.getQuantity()) : "";
             entries.add(new TimelineEntry("FIELD", "\uD83C\uDF31", title, desc, log.getLogDate(), value, "up"));
         }
 

@@ -71,6 +71,52 @@ public class FarmLogDAO {
         return logs;
     }
 
+    public static List<FarmLog> getLogsByWorker(int fwId) throws SQLException {
+        String sql = "SELECT l.*, f.name AS field_name, u.name AS worker_name " +
+                "FROM Farm_Logs l " +
+                "JOIN Fields f ON l.field_id = f.field_id " +
+                "JOIN Farm_Workers fw ON l.fw_id = fw.fw_id " +
+                "JOIN Users u ON fw.user_id = u.user_id " +
+                "WHERE l.fw_id = ? ORDER BY l.log_date DESC, l.log_id DESC";
+        Connection conn = DatabaseConnection.getConnection();
+        PreparedStatement ps = conn.prepareStatement(sql);
+        ps.setInt(1, fwId);
+        ResultSet rs = ps.executeQuery();
+
+        List<FarmLog> logs = new ArrayList<>();
+        while (rs.next()) {
+            logs.add(mapRow(rs));
+        }
+        rs.close(); ps.close();
+        return logs;
+    }
+
+    public static double getWorkerTotalQuantity(int fwId, String logType) throws SQLException {
+        String sql = "SELECT COALESCE(SUM(quantity), 0) FROM Farm_Logs WHERE fw_id = ? AND log_type = ?";
+        Connection conn = DatabaseConnection.getConnection();
+        PreparedStatement ps = conn.prepareStatement(sql);
+        ps.setInt(1, fwId);
+        ps.setString(2, logType);
+        ResultSet rs = ps.executeQuery();
+        double total = rs.next() ? rs.getDouble(1) : 0;
+        rs.close(); ps.close();
+        return total;
+    }
+
+    public static double getWorkerTotalEarnings(int fwId, String logType) throws SQLException {
+        String sql = "SELECT COALESCE(SUM(l.quantity * fw.wage_per_unit), 0) " +
+                "FROM Farm_Logs l JOIN Farm_Workers fw ON l.fw_id = fw.fw_id " +
+                "WHERE l.fw_id = ? AND l.log_type = ?";
+        Connection conn = DatabaseConnection.getConnection();
+        PreparedStatement ps = conn.prepareStatement(sql);
+        ps.setInt(1, fwId);
+        ps.setString(2, logType);
+        ResultSet rs = ps.executeQuery();
+        double total = rs.next() ? rs.getDouble(1) : 0;
+        rs.close(); ps.close();
+        return total;
+    }
+
     public static int addLog(int fieldId, int fwId, String logType, String description, Double quantity) throws SQLException {
         String sql = "INSERT INTO Farm_Logs (field_id, fw_id, log_type, description, quantity, log_date) " +
                 "VALUES (?, ?, ?, ?, ?, CURRENT_DATE)";
